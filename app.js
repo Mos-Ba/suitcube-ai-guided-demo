@@ -23,6 +23,50 @@ const escapeText = v => String(v).replace(/[&<>"']/g, c => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 }[c]));
 
+const styleRecs = [
+  { file: 'images/suit-style-slim-charcoal.png', fit: 'Slim Fit', color: 'เทาควันบุหรี่' },
+  { file: 'images/suit-style-classic-navy.png', fit: 'Classic Fit', color: 'กรมท่า' },
+  { file: 'images/suit-style-slim-black.png', fit: 'Slim Fit', color: 'ดำ' }
+];
+
+const roundQuarter = n => Math.round(n * 4) / 4;
+
+// Demo-only estimate formula: approximates the shape of the real business_rules
+// output (suitcube-ml) closely enough for a UX demo, but is NOT the real model
+// and does not use the uploaded photos.
+function computeDemoResult(state) {
+  const height = parseFloat(state.values.height) || 170;
+  const weight = parseFloat(state.values.weight) || 65;
+  const waistPants = parseFloat(state.values.waist) || 32;
+  const isFemale = state.gender === 'female';
+  const heightM = height / 100;
+  const bmi = weight / (heightM * heightM);
+
+  const chest = isFemale
+    ? roundQuarter(parseFloat(state.values.chest) || waistPants * 1.2)
+    : roundQuarter(waistPants * 1.14);
+  const waist = roundQuarter(waistPants);
+  const hip = isFemale
+    ? roundQuarter(parseFloat(state.values.hip) || chest + 1.5)
+    : roundQuarter(chest - 1);
+  const shoulder = roundQuarter(17 + (chest - 38) * 0.05 + (isFemale ? 0.75 : 0));
+  const upperArm = roundQuarter(chest * 0.316);
+  const armLength = roundQuarter(22 + Math.max(0, height - 165) / 18);
+  const frontLength = roundQuarter(26 + Math.max(0, height - 165) / 6);
+  const backLength = roundQuarter(frontLength - 0.5);
+
+  const sizeNum = Math.floor(((chest * 2.54) / 2) / 2) * 2;
+  const jacketLength = height < 170 ? 'S' : height > 184 ? 'L' : 'R';
+
+  return {
+    bmi: Math.round(bmi * 10) / 10,
+    sizeNum,
+    jacketLength,
+    alternatives: [sizeNum - 2, sizeNum + 2],
+    measurements: { shoulder, chest, waist, hip, upperArm, armLength, frontLength, backLength }
+  };
+}
+
 function go(n) {
   if (state.busy) return;
   state.step = n;
@@ -159,15 +203,53 @@ function render() {
       </div>
     `;
   } else {
+    const r = computeDemoResult(state);
+    const m = r.measurements;
+    const fmt = n => n.toFixed(2);
     body = `
       <div class="success-mark">✓</div>
       <h2 tabindex="-1">สรุปผลตัวอย่างของคุณ</h2>
       <p class="sub">ครบทุกขั้นตอนแล้ว นี่คือตัวอย่างหน้าผลลัพธ์</p>
+
       <div class="result-card">
-        <small>ตัวอย่างการแสดงผล • ไม่ใช่ผล AI จริง</small>
-        <div class="result-size">${state.gender === 'male' ? '50' : '38'} <span>/ Regular</span></div>
-        <strong>ขนาดเสื้อสูทตัวอย่าง</strong>
-        <p class="result-warning">ตัวเลขนี้คงที่สำหรับสาธิตหน้าจอ ไม่ได้คำนวณจากข้อมูลหรือภาพของคุณ และไม่ควรใช้สั่งตัด</p>
+        <div class="result-header">
+          <div class="result-header-text">
+            <small>ไซส์แนะนำสำหรับคุณ</small>
+            <div class="result-size-big">sz${r.sizeNum} <span class="result-length">(${r.jacketLength})</span></div>
+            <small class="result-alt">ทางเลือก: sz${r.alternatives[0]}, sz${r.alternatives[1]}</small>
+          </div>
+          <span class="result-badge">แนะนำ</span>
+        </div>
+        <div class="result-body">
+          <p class="result-profile-line">
+            ${state.gender === 'male' ? 'ชาย' : 'หญิง'} · ${escapeText(state.values.weight)} กก. · ${escapeText(state.values.height)} ซม. ·
+            เอวกางเกง ${escapeText(state.values.waist)}" · เอวสูท ${fmt(m.waist)}" · BMI ${r.bmi}
+          </p>
+          <div class="measure-grid">
+            <div class="measure-item"><span>ไหล่</span><strong>${fmt(m.shoulder)}<small>"</small></strong></div>
+            <div class="measure-item"><span>อก</span><strong>${fmt(m.chest)}<small>"</small></strong></div>
+            <div class="measure-item"><span>เอว</span><strong>${fmt(m.waist)}<small>"</small></strong></div>
+            <div class="measure-item"><span>สะโพก</span><strong>${fmt(m.hip)}<small>"</small></strong></div>
+            <div class="measure-item"><span>ต้นแขน</span><strong>${fmt(m.upperArm)}<small>"</small></strong></div>
+            <div class="measure-item"><span>ยาวแขน</span><strong>${fmt(m.armLength)}<small>"</small></strong></div>
+            <div class="measure-item"><span>ยาวหน้า</span><strong>${fmt(m.frontLength)}<small>"</small></strong></div>
+            <div class="measure-item"><span>ยาวหลัง</span><strong>${fmt(m.backLength)}<small>"</small></strong></div>
+          </div>
+          <p class="result-warning">คำนวณจากสูตรประมาณการสำหรับสาธิตเท่านั้น ไม่ใช่ผลจาก AI หรือภาพถ่ายจริง และไม่ควรใช้สั่งตัด</p>
+        </div>
+      </div>
+
+      <div class="style-recs">
+        <span class="mini-photos-title">สไตล์สูทที่แนะนำสำหรับคุณ:</span>
+        <div class="style-recs-grid">
+          ${styleRecs.map(s => `
+            <div class="style-card">
+              <img src="${s.file}" alt="${s.fit} ${s.color}" loading="lazy">
+              <strong>${s.fit}</strong>
+              <span>${s.color}</span>
+            </div>
+          `).join('')}
+        </div>
       </div>
 
       <div class="result-photos-preview">
