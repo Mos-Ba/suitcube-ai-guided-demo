@@ -23,12 +23,6 @@ const escapeText = v => String(v).replace(/[&<>"']/g, c => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 }[c]));
 
-const styleRecs = [
-  { file: 'images/suit-style-slim-charcoal.png', fit: 'Slim Fit', color: 'เทาควันบุหรี่' },
-  { file: 'images/suit-style-classic-navy.png', fit: 'Classic Fit', color: 'กรมท่า' },
-  { file: 'images/suit-style-slim-black.png', fit: 'Slim Fit', color: 'ดำ' }
-];
-
 const roundQuarter = n => Math.round(n * 4) / 4;
 
 // Demo-only estimate formula: approximates the shape of the real business_rules
@@ -217,6 +211,10 @@ function render() {
       <div class="result-card">
         <div class="result-header">
           <div class="result-header-text">
+            <div class="result-logo" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M12 2L3 7.2v9.6L12 22l9-5.2V7.2L12 2z" stroke="#C3933E" stroke-width="2" stroke-linejoin="round"/><path d="M12 2v20M3 7.2l9 5M21 7.2l-9 5" stroke="#C3933E" stroke-width="1.6"/></svg>
+              <span>SUITCUBE</span>
+            </div>
             <small>ไซส์แนะนำสำหรับคุณ</small>
             <div class="result-size-big">sz${r.sizeNum} <span class="result-length">(${r.jacketLength})</span></div>
             <small class="result-alt">ทางเลือก: sz${r.alternatives[0]}, sz${r.alternatives[1]}</small>
@@ -242,23 +240,6 @@ function render() {
         </div>
       </div>
 
-      <div class="style-recs">
-        <span class="mini-photos-title">สไตล์สูทที่แนะนำสำหรับคุณ:</span>
-        <div class="style-recs-grid">
-          ${styleRecs.map(s => `
-            <div class="style-card">
-              <img src="${s.file}" alt="${s.fit} ${s.color}" loading="lazy">
-              <strong>${s.fit}</strong>
-              <span>${s.color}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-
-      <div class="review">
-        <div><span>ข้อมูลที่กรอก</span><strong>${escapeText(state.values.height)} cm · ${escapeText(state.values.weight)} kg · เอว ${escapeText(state.values.waist)} นิ้ว</strong></div>
-        <div><span>ภาพที่เตรียม</span><strong>4 มุมครบแล้ว</strong></div>
-      </div>
       <p class="privacy">ในการใช้งานจริง ผลประเมินและขั้นตอนสั่งซื้อจะเชื่อมกับระบบของ SUITCUBE</p>
       <div class="actions">
         <button type="button" class="secondary" data-step="2">แก้ไขข้อมูล</button>

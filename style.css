@@ -1110,6 +1110,17 @@ main {
   gap: 16px;
 }
 
+.result-logo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #FFFFFF;
+  margin-bottom: 12px;
+}
+
 .result-header-text small {
   display: block;
   color: rgba(255, 255, 255, 0.6);
@@ -1197,48 +1208,6 @@ main {
   color: #7B715C;
   line-height: 1.6;
   margin: 0;
-}
-
-.style-recs {
-  margin: 22px 0;
-}
-
-.style-recs-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.style-card {
-  background: #FFFFFF;
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  overflow: hidden;
-  text-align: center;
-  padding-bottom: 10px;
-}
-
-.style-card img {
-  width: 100%;
-  aspect-ratio: 3 / 4;
-  object-fit: cover;
-  object-position: top center;
-  background: #F1F0EC;
-}
-
-.style-card strong {
-  display: block;
-  margin-top: 8px;
-  font-size: 13px;
-  color: var(--ink-primary);
-}
-
-.style-card span {
-  display: block;
-  font-size: 11px;
-  color: var(--ink-secondary);
-  margin-top: 2px;
 }
 
 .loading {
