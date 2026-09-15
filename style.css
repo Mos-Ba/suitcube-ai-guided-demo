@@ -246,8 +246,8 @@ main {
 
 .hero-visual-wrap {
   position: relative;
-  width: 220px;
-  height: 120px;
+  width: 232px;
+  height: 130px;
   border-radius: 10px;
   overflow: hidden;
   background: #EFECE6;
@@ -449,7 +449,8 @@ main {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #F1F0EC;
+  background: #EDEBE3;
+  box-shadow: inset 0 0 0 1px #E3DFD3;
   color: var(--ink-secondary);
   font-weight: 500;
   font-size: 14px;
@@ -744,12 +745,12 @@ main {
 .guide-tip-item {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 16px;
 }
 
 .tip-icon-wrap {
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
   border-radius: 8px;
   background: #FFFFFF;
   border: 1px solid #ECE7DD;
