@@ -1,7 +1,281 @@
-<!doctype html><html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SUITCUBE AI — วัดตัวทีละขั้น</title><meta name="description" content="ทดลองประสบการณ์วัดตัวออนไลน์กับ SUITCUBE AI พร้อมคำแนะนำทีละขั้น"><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23191919'/%3E%3Cpath d='M8 10h16v12H8z' fill='none' stroke='%23DBAF5C' stroke-width='2'/%3E%3C/svg%3E"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css"></head><body>
-<header><a class="brand" href="./" aria-label="SUITCUBE AI หน้าแรก">SUIT<span class="cube">◇</span>CUBE <small>AI</small></a><nav><button data-help="how">วิธีใช้งาน</button><span class="divider"></span><button data-help="stylist">♧ <span>ปรึกษาสไตลิสต์</span></button></nav></header>
-<main><section class="intro"><div><div class="eyebrow">YOUR FIT, MADE PERSONAL</div><h1>เริ่มวัดตัว<span>ทีละขั้น พร้อมคำแนะนำ</span></h1><p>เริ่มจากข้อมูลของคุณ แล้วให้เราช่วยเรื่องความพอดี</p></div><div class="intro-note"><span>SUITCUBE AI</span><p>GOOD SUITS.<br>BETTER LIVES.</p></div></section>
-<div class="demo-note"><span>DEMO</span> ทดลองใช้งานได้ครบทุกขั้น • ผลลัพธ์เป็นตัวอย่าง ยังไม่ใช่การวัดตัวจริง <button id="sample">ลองด้วยข้อมูลตัวอย่าง ↗</button></div>
-<section class="workspace" aria-label="ขั้นตอนการวัดตัว"><aside class="steps" id="steps"></aside><div id="surface" aria-live="polite"></div><aside class="guide"><div class="guide-photo" role="img" aria-label="รายละเอียดสูทและงานตัดเย็บ"></div><div class="guide-content"><span class="eyebrow">A LITTLE PREPARATION</span><h2>เตรียมก่อนเริ่ม</h2><div class="tip"><span>↔</span><div><strong>ข้อมูลร่างกาย</strong><p>ส่วนสูง น้ำหนัก และรอบเอวกางเกงที่คุณใส่</p></div></div><div class="tip"><span>▣</span><div><strong>ภาพตามคำแนะนำ</strong><p>เห็นเต็มตัว เสื้อผ้าพอดีตัว และพื้นหลังเรียบ</p></div></div><div class="tip"><span>☼</span><div><strong>พื้นที่สว่าง</strong><p>แสงด้านหน้า ตั้งกล้องตรง และมีพื้นที่ยืน</p></div></div><button class="text-button" data-help="photo">ดูวิธีเตรียมภาพถ่าย <span>↗</span></button></div></aside></section>
-<section class="journey"><div><h2>4 ขั้นตอนสู่ขนาดของคุณ</h2><p>รู้ว่าต้องทำอะไร ในทุกขั้นตอน</p></div><article><span>01</span><strong>ข้อมูลเบื้องต้น</strong><p>เริ่มจากข้อมูลที่คุณทราบ</p></article><article><span>02</span><strong>ภาพถ่าย</strong><p>ถ่ายตามตัวอย่างที่แนะนำ</p></article><article><span>03</span><strong>ตรวจสอบ</strong><p>เช็กข้อมูลก่อนดูผล</p></article><article><span>04</span><strong>ผลประเมิน</strong><p>ดูสรุปและขั้นตอนถัดไป</p></article></section></main>
-<footer><span>SUITCUBE <small>PERSONALITY · PEOPLE · PLANET</small></span><button data-help="privacy">ข้อมูลและความเป็นส่วนตัว</button><span>เดโมเพื่อทดสอบ UX/UI</span></footer><dialog id="dialog"><div id="dialog-content"></div><button class="primary" id="close-dialog">เข้าใจแล้ว</button></dialog><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SUITCUBE AI — เริ่มวัดตัว ทีละขั้น พร้อมคำแนะนำ</title>
+  <meta name="description" content="ทดลองประสบการณ์วัดตัวออนไลน์กับ SUITCUBE AI ใช้เพียงข้อมูลพื้นฐาน ภาพถ่าย และรับผลประเมินสัดส่วนที่เหมาะกับคุณ">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23191919'/%3E%3Cpath d='M8 10h16v12H8z' fill='none' stroke='%23C3933E' stroke-width='2'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Global Header -->
+  <header>
+    <div class="header-inner">
+      <a class="brand" href="./" aria-label="SUITCUBE AI หน้าแรก">
+        SUITC<span class="cube-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M12 2L3 7.2v9.6L12 22l9-5.2V7.2L12 2z" stroke="#C3933E" stroke-width="2" stroke-linejoin="round"/><path d="M12 2v20M3 7.2l9 5M21 7.2l-9 5" stroke="#C3933E" stroke-width="1.6"/></svg></span>BE <small>AI</small>
+      </a>
+
+      <!-- Desktop Nav -->
+      <nav class="desktop-nav">
+        <button type="button" class="nav-link" data-help="how">วิธีใช้งาน</button>
+        <span class="nav-divider"></span>
+        <button type="button" class="nav-link stylist-link" data-help="stylist">
+          <svg class="icon-chat" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <span>ปรึกษาสไตลิสต์</span>
+        </button>
+      </nav>
+
+      <!-- Mobile Header Right -->
+      <div class="mobile-nav-wrap">
+        <button type="button" class="mobile-stylist-btn" data-help="stylist" aria-label="ปรึกษาสไตลิสต์">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <span>ปรึกษาสไตลิสต์</span>
+        </button>
+        <button type="button" class="mobile-menu-btn" id="mobile-menu-toggle" aria-label="เปิดเมนู" data-help="how">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="hero-left">
+        <h1 class="hero-title">
+          เริ่มวัดตัว
+          <span class="hero-gold">ทีละขั้น พร้อมคำแนะนำ</span>
+        </h1>
+        <p class="hero-subtitle">
+          ใช้เพียงข้อมูลพื้นฐาน ภาพถ่าย และรับผลประเมินสัดส่วนที่เหมาะกับคุณ
+        </p>
+      </div>
+
+      <div class="hero-right">
+        <div class="hero-card-banner">
+          <div class="hero-visual-wrap">
+            <img src="atelier.png" alt="SUITCUBE Tailored Suit Atelier" class="hero-suit-img">
+            <div class="hero-book-tag">
+              <small>A BETTER FIT</small>
+              <small>A BRIGHTER YOU</small>
+            </div>
+          </div>
+          <div class="hero-motto">
+            <span>GOOD</span>
+            <span>SUITS</span>
+            <span>BETTER</span>
+            <span>LIVES</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Demo Bar Quick Test -->
+    <div class="demo-quick-bar">
+      <div class="demo-badge">DEMO</div>
+      <p class="demo-info">ทดลองใช้งานได้ครบทุกขั้น • ผลลัพธ์เป็นตัวอย่าง ยังไม่ใช่การวัดตัวจริง</p>
+      <button type="button" id="sample" class="demo-sample-btn">ลองด้วยข้อมูลตัวอย่าง ↗</button>
+    </div>
+
+    <!-- Mobile Horizontal Stepper Indicator -->
+    <div class="mobile-stepper" id="mobile-stepper">
+      <div class="mobile-step-label">ขั้นตอน <span id="mobile-step-num">1</span> จาก 4</div>
+      <div class="mobile-step-dots">
+        <div class="mob-dot active" data-step="0">1</div>
+        <div class="mob-line"></div>
+        <div class="mob-dot" data-step="1">2</div>
+        <div class="mob-line"></div>
+        <div class="mob-dot" data-step="2">3</div>
+        <div class="mob-line"></div>
+        <div class="mob-dot" data-step="3">4</div>
+      </div>
+    </div>
+
+    <!-- Main Workspace Card Container -->
+    <section class="workspace-card" aria-label="ขั้นตอนการวัดตัว">
+      <div class="workspace-body">
+        
+        <!-- Left: Desktop Vertical Stepper -->
+        <aside class="steps-column" id="steps" aria-label="ขั้นตอน"></aside>
+
+        <!-- Center: Dynamic Interactive Surface -->
+        <div class="surface-column" id="surface" aria-live="polite"></div>
+
+        <!-- Right: Preparation Guide Column -->
+        <aside class="guide-column" id="guide-column">
+          <!-- Accordion Toggle for Mobile -->
+          <div class="guide-accordion-header" id="guide-accordion-toggle" role="button" tabindex="0" aria-expanded="false">
+            <div class="guide-acc-text">
+              <span class="guide-acc-title">เตรียมก่อนเริ่ม</span>
+              <span class="guide-acc-summary">ข้อมูลร่างกาย ภาพตามคำแนะนำ พื้นที่สว่าง</span>
+            </div>
+            <span class="guide-acc-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
+          </div>
+
+          <!-- Guide Content -->
+          <div class="guide-box" id="guide-box">
+            <div class="guide-header-row">
+              <h2 class="guide-title">เตรียมก่อนเริ่ม</h2>
+              <!-- Visual graphic preview (measuring tape + sketch illustration) -->
+              <div class="guide-illustration" aria-hidden="true">
+                <div class="sketch-overlay">
+                  <svg viewBox="0 0 100 120" width="70" height="85" fill="none" stroke="#967232" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M35 15 C35 8, 65 8, 65 15 C65 24, 60 28, 50 30 C40 28, 35 24, 35 15 Z"/>
+                    <path d="M50 30 L50 40 M30 40 L70 40"/>
+                    <path d="M30 40 C20 45, 10 55, 6 75 L18 80 L28 58 L28 115 L72 115 L72 58 L82 80 L94 75 C90 55, 80 45, 70 40 Z"/>
+                    <path d="M35 50 L50 68 L65 50"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3 Tips with Custom Golden Icons -->
+            <div class="guide-tips-list">
+              <div class="guide-tip-item">
+                <div class="tip-icon-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#C3933E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.3 8.7l-6-6a2 2 0 0 0-2.8 0L3 12.2a2 2 0 0 0 0 2.8l6 6a2 2 0 0 0 2.8 0l9.5-9.5a2 2 0 0 0 0-2.8z"/>
+                    <path d="M7.5 10.5l2 2M10.5 7.5l2 2M13.5 4.5l2 2M12 15l2 2"/>
+                  </svg>
+                </div>
+                <div class="tip-text">
+                  <strong>ข้อมูลร่างกาย</strong>
+                  <p>เช่น ส่วนสูง น้ำหนัก รอบเอว</p>
+                </div>
+              </div>
+
+              <div class="guide-tip-item">
+                <div class="tip-icon-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#C3933E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                </div>
+                <div class="tip-text">
+                  <strong>ภาพตามคำแนะนำ</strong>
+                  <p>ถ่ายตามมุมที่กำหนด</p>
+                </div>
+              </div>
+
+              <div class="guide-tip-item">
+                <div class="tip-icon-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#C3933E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="4"/>
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+                  </svg>
+                </div>
+                <div class="tip-text">
+                  <strong>พื้นที่สว่าง</strong>
+                  <p>ถ่ายในที่มีแสงเพียงพอ</p>
+                </div>
+              </div>
+            </div>
+
+            <button type="button" class="guide-learn-more" data-help="photo">ดูวิธีเตรียมภาพถ่าย <span>↗</span></button>
+          </div>
+        </aside>
+
+      </div>
+
+      <!-- Card Footer Utility Links -->
+      <div class="workspace-footer">
+        <div class="footer-link-item">
+          <button type="button" class="btn-utility-link" data-help="login">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>มีข้อมูลเดิม? <strong>เข้าสู่ระบบ →</strong></span>
+          </button>
+        </div>
+        <span class="footer-divider" aria-hidden="true"></span>
+        <div class="footer-link-item">
+          <button type="button" class="btn-utility-link" data-help="photo">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <span>ยังไม่พร้อมถ่ายภาพ? <strong>ดูวิธีเตรียมตัว →</strong></span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom Section: 4 ขั้นตอนสู่ขนาดของคุณ -->
+    <section class="journey-section">
+      <div class="journey-header">
+        <h2>4 ขั้นตอนสู่ขนาดของคุณ</h2>
+        <p>รู้ว่าต้องทำอะไร ในทุกขั้นตอน</p>
+      </div>
+
+      <div class="journey-cards-grid">
+        <!-- Card 1 -->
+        <article class="journey-card">
+          <div class="journey-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <div class="journey-card-content">
+            <span class="step-num">1</span>
+            <strong>ข้อมูลเบื้องต้น</strong>
+            <p>กรอกข้อมูลพื้นฐาน</p>
+          </div>
+        </article>
+
+        <!-- Card 2 -->
+        <article class="journey-card">
+          <div class="journey-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </div>
+          <div class="journey-card-content">
+            <span class="step-num">2</span>
+            <strong>ภาพถ่าย</strong>
+            <p>อัปโหลดภาพถ่ายตามคำแนะนำ</p>
+          </div>
+        </article>
+
+        <!-- Card 3 -->
+        <article class="journey-card">
+          <div class="journey-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </div>
+          <div class="journey-card-content">
+            <span class="step-num">3</span>
+            <strong>ตรวจสอบ</strong>
+            <p>ยืนยันข้อมูลของคุณ</p>
+          </div>
+        </article>
+
+        <!-- Card 4 -->
+        <article class="journey-card">
+          <div class="journey-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+          </div>
+          <div class="journey-card-content">
+            <span class="step-num">4</span>
+            <strong>ผลประเมิน</strong>
+            <p>รับผลสัดส่วนที่เหมาะกับคุณ</p>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <!-- Global Footer -->
+  <footer>
+    <div class="footer-inner">
+      <span>SUITCUBE <small>PERSONALITY · PEOPLE · PLANET</small></span>
+      <button type="button" data-help="privacy">ข้อมูลและความเป็นส่วนตัว</button>
+      <span>เดโมเพื่อทดสอบ UX/UI</span>
+    </div>
+  </footer>
+
+  <!-- Modal Dialog -->
+  <dialog id="dialog">
+    <div id="dialog-content"></div>
+    <button type="button" class="primary" id="close-dialog">เข้าใจแล้ว</button>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
