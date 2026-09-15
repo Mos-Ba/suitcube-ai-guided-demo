@@ -696,10 +696,23 @@ main {
 }
 
 .guide-box {
+  position: relative;
   padding: 30px 24px;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   height: 100%;
+  background: #E8E2D7 url('preparation-fabric-tape.png') center / cover no-repeat;
+}
+
+.guide-overlay {
+  position: relative;
+  background: rgba(250, 248, 244, 0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-radius: 14px;
+  padding: 22px 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .guide-title {
@@ -710,25 +723,10 @@ main {
   margin-bottom: 20px;
 }
 
-.guide-body {
-  display: flex;
-  gap: 20px;
-}
-
 .guide-tips-list {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  flex: 1;
-  min-width: 0;
-}
-
-.guide-photo {
-  flex: 0 0 44%;
-  border-radius: 12px;
-  background: #E8E2D7 url('preparation-fabric-tape.png') center / cover no-repeat;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
-  min-height: 220px;
 }
 
 .guide-tip-item {
@@ -764,7 +762,8 @@ main {
 }
 
 .guide-learn-more {
-  margin-top: auto;
+  margin-top: 20px;
+  display: block;
   font-size: 13px;
   color: var(--gold-dark);
   font-weight: 500;
@@ -1311,15 +1310,6 @@ dialog a {
   
   .workspace-body {
     grid-template-columns: 190px 1fr 290px;
-  }
-
-  .guide-body {
-    flex-direction: column;
-  }
-
-  .guide-photo {
-    order: -1;
-    flex: 0 0 180px;
   }
 
   .journey-cards-grid {
