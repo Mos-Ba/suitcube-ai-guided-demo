@@ -721,7 +721,7 @@ main {
   width: 90px;
   height: 70px;
   border-radius: 8px;
-  background: #E8E2D7 url('atelier.png') left 90% / cover no-repeat;
+  background: #E8E2D7 url('preparation-fabric-tape.png') right center / cover no-repeat;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
