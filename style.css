@@ -413,6 +413,14 @@ main {
   min-height: 520px;
 }
 
+.workspace-body.no-guide {
+  grid-template-columns: 210px 1fr;
+}
+
+.workspace-body.no-guide .guide-column {
+  display: none;
+}
+
 /* Left: Desktop Stepper */
 .steps-column {
   padding: 38px 24px;
@@ -1420,6 +1428,10 @@ dialog a {
 @media (max-width: 1080px) {
   .workspace-body {
     grid-template-columns: 190px 1fr 290px;
+  }
+
+  .workspace-body.no-guide {
+    grid-template-columns: 190px 1fr;
   }
 
   .journey-cards-grid {

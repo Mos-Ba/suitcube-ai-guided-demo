@@ -91,6 +91,9 @@ function field(key, title, unit, min, max) {
 }
 
 function render() {
+  // 0. Show the preparation guide panel only on step 1
+  document.querySelector('#workspace-body')?.classList.toggle('no-guide', state.step !== 0);
+
   // 1. Render Desktop Stepper
   const stepsEl = document.querySelector('#steps');
   if (stepsEl) {
