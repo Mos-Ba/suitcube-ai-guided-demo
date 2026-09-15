@@ -1111,14 +1111,29 @@ main {
 }
 
 .result-logo {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 1px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
   color: #FFFFFF;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+}
+
+.result-logo .cube-icon {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 2px;
+}
+
+.result-logo small {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gold-primary);
+  margin-left: 6px;
+  padding-left: 6px;
+  border-left: 1.5px solid rgba(255, 255, 255, 0.3);
+  letter-spacing: 1px;
 }
 
 .result-header-text small {
