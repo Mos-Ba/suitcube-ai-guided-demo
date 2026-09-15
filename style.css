@@ -1100,6 +1100,17 @@ main {
   margin: 20px 0;
 }
 
+.result-letterhead {
+  background: #FFFFFF;
+  padding: 18px 24px 0;
+}
+
+.result-logo-img {
+  height: 20px;
+  width: auto;
+  display: block;
+}
+
 .result-header {
   background: var(--ink-primary);
   color: #FFFFFF;
@@ -1108,32 +1119,6 @@ main {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-}
-
-.result-logo {
-  display: inline-flex;
-  align-items: center;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: -0.3px;
-  color: #FFFFFF;
-  margin-bottom: 14px;
-}
-
-.result-logo .cube-icon {
-  display: inline-flex;
-  align-items: center;
-  margin: 0 2px;
-}
-
-.result-logo small {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--gold-primary);
-  margin-left: 6px;
-  padding-left: 6px;
-  border-left: 1.5px solid rgba(255, 255, 255, 0.3);
-  letter-spacing: 1px;
 }
 
 .result-header-text small {

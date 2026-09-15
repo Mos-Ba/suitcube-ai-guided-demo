@@ -209,11 +209,11 @@ function render() {
       <p class="sub">ครบทุกขั้นตอนแล้ว นี่คือตัวอย่างหน้าผลลัพธ์</p>
 
       <div class="result-card">
+        <div class="result-letterhead">
+          <img src="images/suitcube-wordmark.png" alt="SUITCUBE" class="result-logo-img">
+        </div>
         <div class="result-header">
           <div class="result-header-text">
-            <div class="result-logo" aria-hidden="true">
-              SUITC<span class="cube-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M12 2L3 7.2v9.6L12 22l9-5.2V7.2L12 2z" stroke="#C3933E" stroke-width="2" stroke-linejoin="round"/><path d="M12 2v20M3 7.2l9 5M21 7.2l-9 5" stroke="#C3933E" stroke-width="1.6"/></svg></span>BE <small>AI</small>
-            </div>
             <small>ไซส์แนะนำสำหรับคุณ</small>
             <div class="result-size-big">sz${r.sizeNum} <span class="result-length">(${r.jacketLength})</span></div>
             <small class="result-alt">ทางเลือก: sz${r.alternatives[0]}, sz${r.alternatives[1]}</small>
