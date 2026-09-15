@@ -255,18 +255,6 @@ function render() {
         </div>
       </div>
 
-      <div class="result-photos-preview">
-        <span class="mini-photos-title">ภาพที่ใช้วิเคราะห์ขนาด:</span>
-        <div class="mini-photos">
-          ${state.photos.map((p, i) => `
-            <div class="mini-photo-item">
-              <img src="${p?.url || samplePhotoUrls[i]}" alt="${angles[i]}">
-              <small>${angles[i]}</small>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-
       <div class="review">
         <div><span>ข้อมูลที่กรอก</span><strong>${escapeText(state.values.height)} cm · ${escapeText(state.values.weight)} kg · เอว ${escapeText(state.values.waist)} นิ้ว</strong></div>
         <div><span>ภาพที่เตรียม</span><strong>4 มุมครบแล้ว</strong></div>
