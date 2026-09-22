@@ -1053,23 +1053,6 @@ main {
   object-fit: contain;
 }
 
-.check {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  font-size: 13px;
-  margin: 22px 0 10px;
-  color: var(--ink-primary);
-  cursor: pointer;
-}
-
-.check input {
-  accent-color: var(--gold-primary);
-  width: 18px;
-  height: 18px;
-  margin-top: 2px;
-}
-
 .text-button {
   color: var(--gold-dark);
   font-size: 13px;

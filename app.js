@@ -14,7 +14,6 @@ const state = {
   values: { height: '', weight: '', waist: '', hip: '', chest: '' },
   photos: [null, null, null, null],
   sample: false,
-  consent: false,
   busy: false
 };
 
@@ -189,10 +188,6 @@ function render() {
       </div>
       
       <button type="button" class="text-button" data-step="1">แก้ไขภาพถ่าย ↗</button>
-      <label class="check">
-        <input type="checkbox" id="confirm" ${state.consent ? 'checked' : ''}>
-        <span>ฉันเข้าใจว่าผลลัพธ์ในเดโมเป็นข้อมูลตัวอย่าง ไม่ใช่ขนาดสำหรับสั่งตัดจริง</span>
-      </label>
       <p class="error" id="error" role="alert"></p>
       <div class="actions">
         <button type="button" class="secondary" data-step="1">ย้อนกลับ</button>
@@ -239,7 +234,6 @@ function render() {
         </div>
       </div>
 
-      <p class="privacy">ในการใช้งานจริง ผลประเมินและขั้นตอนสั่งซื้อจะเชื่อมกับระบบของ SUITCUBE</p>
       <div class="actions">
         <button type="button" class="secondary" data-step="2">แก้ไขข้อมูล</button>
         <button type="button" class="primary" id="print">พิมพ์สรุปเดโม</button>
@@ -257,7 +251,6 @@ function bind() {
     if (e.target.name) {
       state.values[e.target.name] = e.target.value;
       state.max = 0;
-      state.consent = false;
     }
   });
 
@@ -275,12 +268,7 @@ function bind() {
     go(2);
   });
 
-  document.querySelector('#confirm')?.addEventListener('change', e => {
-    state.consent = e.target.checked;
-  });
-
   document.querySelector('#result')?.addEventListener('click', () => {
-    if (!state.consent) return error('กรุณายืนยันว่าคุณเข้าใจการใช้ข้อมูลตัวอย่าง');
     state.busy = true;
     surface.innerHTML = '<div class="loading" role="status"><div class="spinner"></div><h2>กำลังประมวลผลขนาดของคุณ</h2><p class="sub">วิเคราะห์สัดส่วนและภาพถ่ายด้วยระบบ AI</p></div>';
     setTimeout(() => {
@@ -314,7 +302,6 @@ async function loadPhoto(i, file) {
     if (state.photos[i]?.url && !state.photos[i]?.sample) URL.revokeObjectURL(state.photos[i].url);
     state.photos[i] = { url, sample: false };
     state.max = 1;
-    state.consent = false;
     render();
   } catch {
     URL.revokeObjectURL(url);
@@ -334,7 +321,6 @@ function sample() {
     angle: angles[i]
   }));
   state.sample = true;
-  state.consent = false;
   state.max = 1;
   go(0);
 }
@@ -348,7 +334,6 @@ function reset() {
     values: { height: '', weight: '', waist: '', hip: '', chest: '' },
     photos: [null, null, null, null],
     sample: false,
-    consent: false,
     busy: false
   });
   render();
@@ -358,7 +343,7 @@ function reset() {
 const help = {
   how: [
     'วิธีใช้งาน SUITCUBE AI',
-    '<ol><li>กรอกข้อมูลสัดส่วนเบื้องต้น (ส่วนสูง, น้ำหนัก, รอบเอวกางเกง)</li><li>เตรียมภาพถ่ายเต็มตัวทั้ง 4 มุม (หน้า, หลัง, ซ้าย, ขวา) ตามคำแนะนำ</li><li>ตรวจสอบข้อมูลและยืนยันเพื่อดูผลการประเมิน</li><li>รับผลสรุปขนาดเสื้อสูทตัวอย่าง พร้อมปรึกษาสไตลิสต์เพิ่มเติม</li></ol><p>สามารถกด <strong>“ลองด้วยข้อมูลตัวอย่าง”</strong> เพื่อทดสอบโฟลว์ระบบได้ทันที</p>'
+    '<ol><li>กรอกข้อมูลสัดส่วนเบื้องต้น (ส่วนสูง, น้ำหนัก, รอบเอวกางเกง)</li><li>เตรียมภาพถ่ายเต็มตัวทั้ง 4 มุม (หน้า, หลัง, ซ้าย, ขวา) ตามคำแนะนำ</li><li>ตรวจสอบข้อมูลเพื่อดูผลการประเมิน</li><li>รับผลสรุปขนาดเสื้อสูทตัวอย่าง พร้อมปรึกษาสไตลิสต์เพิ่มเติม</li></ol><p>สามารถกด <strong>“ลองด้วยข้อมูลตัวอย่าง”</strong> เพื่อทดสอบโฟลว์ระบบได้ทันที</p>'
   ],
   photo: [
     'เตรียมภาพถ่ายอย่างไร',
@@ -425,7 +410,6 @@ document.addEventListener('click', e => {
   if (gender) {
     state.gender = gender.dataset.gender;
     state.max = 0;
-    state.consent = false;
     render();
   }
 
@@ -440,7 +424,6 @@ document.addEventListener('click', e => {
     if (state.photos[i]?.url && !state.photos[i]?.sample) URL.revokeObjectURL(state.photos[i].url);
     state.photos[i] = null;
     state.max = 1;
-    state.consent = false;
     render();
   }
 });
