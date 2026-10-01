@@ -1,19 +1,26 @@
 const labels = ['ข้อมูลเบื้องต้น', 'ภาพถ่าย', 'ตรวจสอบ', 'ผลประเมิน'];
 const angles = ['ด้านหน้า', 'ด้านหลัง', 'ด้านซ้าย', 'ด้านขวา'];
-const samplePhotoUrls = [
-  'images/photo-sample-front.jpg',
-  'images/photo-sample-back.jpg',
-  'images/photo-sample-left.jpg',
-  'images/photo-sample-right.jpg'
-];
+const photoKeys = ['front', 'back', 'left', 'right'];
+
+// เว็บจริงเรียก /api แบบ same-origin (nginx เติม API key ให้เบื้องหลัง — ห้ามใส่ key ในหน้าเว็บ)
+// เปิดบนเครื่อง dev จะเรียก ML API ที่ localhost:8000 ตรงๆ (path ไม่มี /api)
+const API_BASE = window.SUITCUBE_API_BASE
+  || (['localhost', '127.0.0.1'].includes(location.hostname) ? `http://${location.hostname}:8000` : '/api');
+
+// ขีดจำกัดของ API: 8 MB และ 25 ล้านพิกเซลต่อรูป — รูปเกินจะถูกย่อในเครื่องก่อนส่ง
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+const MAX_UPLOAD_PIXELS = 25_000_000;
+const REQUEST_TIMEOUT_MS = 60_000; // server ตัดที่ 45 วินาที
 
 const state = {
   step: 0,
   max: 0,
   gender: 'male',
   values: { height: '', weight: '', waist: '', hip: '', chest: '' },
-  photos: [null, null, null, null],
-  sample: false,
+  photos: [null, null, null, null], // { url, file }
+  failedPhotos: [],
+  consent: false,
+  result: null,
   busy: false
 };
 
@@ -21,44 +28,6 @@ const surface = document.querySelector('#surface');
 const escapeText = v => String(v).replace(/[&<>"']/g, c => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 }[c]));
-
-const roundQuarter = n => Math.round(n * 4) / 4;
-
-// Demo-only estimate formula: approximates the shape of the real business_rules
-// output (suitcube-ml) closely enough for a UX demo, but is NOT the real model
-// and does not use the uploaded photos.
-function computeDemoResult(state) {
-  const height = parseFloat(state.values.height) || 170;
-  const weight = parseFloat(state.values.weight) || 65;
-  const waistPants = parseFloat(state.values.waist) || 32;
-  const isFemale = state.gender === 'female';
-  const heightM = height / 100;
-  const bmi = weight / (heightM * heightM);
-
-  const chest = isFemale
-    ? roundQuarter(parseFloat(state.values.chest) || waistPants * 1.2)
-    : roundQuarter(waistPants * 1.14);
-  const waist = roundQuarter(waistPants);
-  const hip = isFemale
-    ? roundQuarter(parseFloat(state.values.hip) || chest + 1.5)
-    : roundQuarter(chest - 1);
-  const shoulder = roundQuarter(17 + (chest - 38) * 0.05 + (isFemale ? 0.75 : 0));
-  const upperArm = roundQuarter(chest * 0.316);
-  const armLength = roundQuarter(22 + Math.max(0, height - 165) / 18);
-  const frontLength = roundQuarter(26 + Math.max(0, height - 165) / 6);
-  const backLength = roundQuarter(frontLength - 0.5);
-
-  const sizeNum = Math.floor(((chest * 2.54) / 2) / 2) * 2;
-  const jacketLength = height < 170 ? 'S' : height > 184 ? 'L' : 'R';
-
-  return {
-    bmi: Math.round(bmi * 10) / 10,
-    sizeNum,
-    jacketLength,
-    alternatives: [sizeNum - 2, sizeNum + 2],
-    measurements: { shoulder, chest, waist, hip, upperArm, armLength, frontLength, backLength }
-  };
-}
 
 function go(n) {
   if (state.busy) return;
@@ -126,7 +95,7 @@ function render() {
           <button class="primary" type="submit">ถัดไป: เตรียมภาพถ่าย <span aria-hidden="true">→</span></button>
         </div>
       </form>
-      <p class="form-foot">ข้อมูลอยู่ในหน้านี้เท่านั้น ไม่ต้องสมัครสมาชิก</p>
+      <p class="form-foot">ไม่ต้องสมัครสมาชิก · ข้อมูลจะถูกส่งเมื่อคุณกดยืนยันในขั้นตอนตรวจสอบเท่านั้น</p>
     `;
   } else if (state.step === 1) {
     body = `
@@ -134,11 +103,11 @@ function render() {
       <p class="sub">เตรียมภาพเต็มตัวทั้ง 4 มุม (เห็นศีรษะถึงปลายเท้า)</p>
       <div class="photos">
         ${angles.map((a, i) => `
-          <div class="photo-card">
+          <div class="photo-card ${state.failedPhotos.includes(photoKeys[i]) ? 'photo-failed' : ''}">
             <div class="photo-preview ${state.photos[i] ? 'has-image' : ''}">
               ${state.photos[i] ? `
                 <img src="${state.photos[i].url}" alt="ภาพ${a}">
-                ${state.photos[i].sample ? '<span class="sample-badge">ภาพตัวอย่าง</span>' : ''}
+                ${state.failedPhotos.includes(photoKeys[i]) ? '<span class="retake-badge">ถ่ายใหม่</span>' : ''}
               ` : `
                 <div class="photo-placeholder">
                   <span class="ph-icon">▣</span>
@@ -146,7 +115,7 @@ function render() {
                 </div>
               `}
             </div>
-            <strong>${a} ${state.photos[i] ? '<span class="check-mark-text">✓</span>' : ''}</strong>
+            <strong>${a} ${state.photos[i] && !state.failedPhotos.includes(photoKeys[i]) ? '<span class="check-mark-text">✓</span>' : ''}</strong>
             <label for="photo${i}">
               ${state.photos[i] ? 'เปลี่ยนภาพ' : 'เลือกภาพ'}
               <input id="photo${i}" type="file" accept="image/jpeg,image/png,image/webp" data-photo="${i}">
@@ -155,9 +124,11 @@ function render() {
           </div>
         `).join('')}
       </div>
-      <p class="privacy">รองรับ JPG, PNG, WebP ไม่เกิน 10 MB ต่อภาพ<br>เดโมนี้แสดงภาพบนอุปกรณ์ของคุณ ไม่ส่งภาพไปยังเซิร์ฟเวอร์ และไม่ตรวจวิเคราะห์รูปร่าง</p>
-      <button type="button" class="text-button" data-help="photo">ดูตัวอย่างภาพถ่ายทั้ง 4 มุม ↗</button>
-      <p class="error" id="error" role="alert"></p>
+      <p class="privacy">รองรับ JPG, PNG, WebP · ภาพขนาดใหญ่จะถูกย่อให้อัตโนมัติ<br>ภาพยังอยู่ในเครื่องของคุณจนกว่าจะกดยืนยันส่งในขั้นตอนถัดไป</p>
+      <button type="button" class="text-button" data-help="photo">ดูวิธีถ่ายภาพทั้ง 4 มุม ↗</button>
+      <p class="error" id="error" role="alert">${state.failedPhotos.length
+        ? `ระบบตรวจจับร่างกายในภาพ${state.failedPhotos.map(k => angles[photoKeys.indexOf(k)]).join(', ')}ไม่ได้ — กรุณาถ่ายใหม่ให้เห็นศีรษะถึงปลายเท้า พื้นหลังเรียบ แสงพอ`
+        : ''}</p>
       <div class="actions">
         <button type="button" class="secondary" data-step="0">ย้อนกลับ</button>
         <button type="button" class="primary" id="photos-next">ถัดไป: ตรวจสอบข้อมูล →</button>
@@ -166,7 +137,7 @@ function render() {
   } else if (state.step === 2) {
     body = `
       <h2 tabindex="-1">ตรวจสอบอีกครั้ง</h2>
-      <p class="sub">ข้อมูลถูกต้องแล้ว พร้อมดูผลตัวอย่าง</p>
+      <p class="sub">ตรวจข้อมูลให้ถูกต้องก่อนส่งประเมิน</p>
       <div class="review">
         <div><span>ประเภทสูท</span><strong>${state.gender === 'male' ? 'สูทผู้ชาย' : 'สูทผู้หญิง'}</strong></div>
         ${Object.entries(state.values).filter(([k, v]) => v && (state.gender === 'female' || !['chest', 'hip'].includes(k))).map(([k, v]) => `
@@ -180,7 +151,7 @@ function render() {
         <div class="mini-photos">
           ${state.photos.map((p, i) => `
             <div class="mini-photo-item">
-              <img src="${p?.url || samplePhotoUrls[i]}" alt="${angles[i]}">
+              <img src="${p?.url || ''}" alt="${angles[i]}">
               <small>${angles[i]}</small>
             </div>
           `).join('')}
@@ -188,20 +159,32 @@ function render() {
       </div>
       
       <button type="button" class="text-button" data-step="1">แก้ไขภาพถ่าย ↗</button>
+
+      <label class="consent">
+        <input type="checkbox" id="consent" ${state.consent ? 'checked' : ''}>
+        <span>ข้าพเจ้ายินยอมให้ส่งข้อมูลสัดส่วนและภาพถ่ายทั้ง 4 มุมไปประมวลผลด้วยระบบ AI
+        และให้ทีมงาน SUITCUBE ตรวจสอบเพื่อแนะนำขนาดที่เหมาะสม
+        <button type="button" class="inline-link" data-help="privacy">อ่านรายละเอียด</button></span>
+      </label>
+
       <p class="error" id="error" role="alert"></p>
       <div class="actions">
         <button type="button" class="secondary" data-step="1">ย้อนกลับ</button>
-        <button type="button" class="primary" id="result">ดูผลประเมินตัวอย่าง →</button>
+        <button type="button" class="primary" id="result" ${state.consent ? '' : 'disabled'}>ส่งประเมินด้วย AI →</button>
       </div>
     `;
   } else {
-    const r = computeDemoResult(state);
-    const m = r.measurements;
-    const fmt = n => n.toFixed(2);
+    const r = state.result || {};
+    const m = r.measurements || {};
+    const wc = r.waist_conversion || {};
+    const fmt = n => (typeof n === 'number' ? n.toFixed(2) : '–');
+    const alts = (r.jacket_size_alternatives || []).map(escapeText).join(', ');
+    const warnings = r.warnings || [];
+    const confirmWaist = r.action_required === 'CONFIRM_WAIST';
     body = `
       <div class="success-mark">✓</div>
-      <h2 tabindex="-1">สรุปผลตัวอย่างของคุณ</h2>
-      <p class="sub">ครบทุกขั้นตอนแล้ว นี่คือตัวอย่างหน้าผลลัพธ์</p>
+      <h2 tabindex="-1">ผลประเมินขนาดของคุณ</h2>
+      <p class="sub">ประเมินจากข้อมูลสัดส่วนและภาพถ่ายทั้ง 4 มุมด้วยระบบ AI</p>
 
       <div class="result-card">
         <div class="result-letterhead">
@@ -210,33 +193,39 @@ function render() {
         <div class="result-header">
           <div class="result-header-text">
             <small>ไซส์แนะนำสำหรับคุณ</small>
-            <div class="result-size-big">sz${r.sizeNum} <span class="result-length">(${r.jacketLength})</span></div>
-            <small class="result-alt">ทางเลือก: sz${r.alternatives[0]}, sz${r.alternatives[1]}</small>
+            <div class="result-size-big">${escapeText(r.jacket_size || '–')} <span class="result-length">(${escapeText(r.jacket_length || '–')})</span></div>
+            ${alts ? `<small class="result-alt">ทางเลือก: ${alts}</small>` : ''}
           </div>
           <span class="result-badge">แนะนำ</span>
         </div>
         <div class="result-body">
           <p class="result-profile-line">
             ${state.gender === 'male' ? 'ชาย' : 'หญิง'} · ${escapeText(state.values.weight)} กก. · ${escapeText(state.values.height)} ซม. ·
-            เอวกางเกง ${escapeText(state.values.waist)}" · เอวสูท ${fmt(m.waist)}" · BMI ${r.bmi}
+            เอวกางเกง ${escapeText(state.values.waist)}"${typeof wc.suit_waist === 'number' ? ` · เอวสูท ${fmt(wc.suit_waist)}"` : ''}${typeof r.bmi === 'number' ? ` · BMI ${r.bmi}` : ''}
           </p>
           <div class="measure-grid">
             <div class="measure-item"><span>ไหล่</span><strong>${fmt(m.shoulder)}<small>"</small></strong></div>
             <div class="measure-item"><span>อก</span><strong>${fmt(m.chest)}<small>"</small></strong></div>
             <div class="measure-item"><span>เอว</span><strong>${fmt(m.waist)}<small>"</small></strong></div>
             <div class="measure-item"><span>สะโพก</span><strong>${fmt(m.hip)}<small>"</small></strong></div>
-            <div class="measure-item"><span>ต้นแขน</span><strong>${fmt(m.upperArm)}<small>"</small></strong></div>
-            <div class="measure-item"><span>ยาวแขน</span><strong>${fmt(m.armLength)}<small>"</small></strong></div>
-            <div class="measure-item"><span>ยาวหน้า</span><strong>${fmt(m.frontLength)}<small>"</small></strong></div>
-            <div class="measure-item"><span>ยาวหลัง</span><strong>${fmt(m.backLength)}<small>"</small></strong></div>
+            <div class="measure-item"><span>ต้นแขน</span><strong>${fmt(m.upper_arm)}<small>"</small></strong></div>
+            <div class="measure-item"><span>ยาวแขน</span><strong>${fmt(m.arm_length)}<small>"</small></strong></div>
+            <div class="measure-item"><span>ยาวหน้า</span><strong>${fmt(m.front_length)}<small>"</small></strong></div>
+            <div class="measure-item"><span>ยาวหลัง</span><strong>${fmt(m.back_length)}<small>"</small></strong></div>
           </div>
-          <p class="result-warning">คำนวณจากสูตรประมาณการสำหรับสาธิตเท่านั้น ไม่ใช่ผลจาก AI หรือภาพถ่ายจริง และไม่ควรใช้สั่งตัด</p>
+          ${confirmWaist ? `<p class="result-alert">รอบเอวที่กรอกดูไม่สอดคล้องกับน้ำหนักและส่วนสูง กรุณาตรวจสอบรอบเอวกางเกงอีกครั้ง หรือให้ทีมงานยืนยันก่อนสั่งตัด</p>` : ''}
+          ${warnings.length ? `
+            <ul class="result-notes">
+              ${warnings.map(w => `<li>${escapeText(w)}</li>`).join('')}
+            </ul>
+          ` : ''}
+          <p class="result-warning">ผลนี้เป็นขนาดแนะนำเบื้องต้น ทีมงาน SUITCUBE จะตรวจสอบอีกครั้งก่อนยืนยันการสั่งตัด</p>
         </div>
       </div>
 
       <div class="actions">
         <button type="button" class="secondary" data-step="2">แก้ไขข้อมูล</button>
-        <button type="button" class="primary" id="print">พิมพ์สรุปเดโม</button>
+        <button type="button" class="primary" id="print">พิมพ์ / บันทึกผล</button>
       </div>
       <button type="button" class="text-button" id="reset">เริ่มใหม่ทั้งหมด ↗</button>
     `;
@@ -251,7 +240,14 @@ function bind() {
     if (e.target.name) {
       state.values[e.target.name] = e.target.value;
       state.max = 0;
+      state.result = null;
     }
+  });
+
+  document.querySelector('#consent')?.addEventListener('change', e => {
+    state.consent = e.target.checked;
+    const btn = document.querySelector('#result');
+    if (btn) btn.disabled = !state.consent;
   });
 
   document.querySelector('#basics')?.addEventListener('submit', e => {
@@ -268,14 +264,7 @@ function bind() {
     go(2);
   });
 
-  document.querySelector('#result')?.addEventListener('click', () => {
-    state.busy = true;
-    surface.innerHTML = '<div class="loading" role="status"><div class="spinner"></div><h2>กำลังประมวลผลขนาดของคุณ</h2><p class="sub">วิเคราะห์สัดส่วนและภาพถ่ายด้วยระบบ AI</p></div>';
-    setTimeout(() => {
-      state.busy = false;
-      go(3);
-    }, 1000);
-  });
+  document.querySelector('#result')?.addEventListener('click', submitPrediction);
 
   document.querySelector('#print')?.addEventListener('click', () => window.print());
   document.querySelector('#reset')?.addEventListener('click', () => showHelp('reset'));
@@ -286,10 +275,90 @@ function error(t) {
   if (el) el.textContent = t;
 }
 
+// อ่านข้อความจาก detail ของ API (เป็นได้ทั้ง string, {message,...} หรือ list ของ pydantic)
+function apiMessage(detail) {
+  if (!detail) return '';
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) return detail.map(d => d?.msg || '').filter(Boolean).join(' · ');
+  return detail.message || '';
+}
+
+async function submitPrediction() {
+  if (state.busy || !state.consent) return;
+  if (state.photos.some(p => !p?.file)) return error('กรุณาเลือกภาพให้ครบทั้ง 4 มุม');
+
+  const isFemale = state.gender === 'female';
+  const fd = new FormData();
+  fd.append('gender', isFemale ? '0' : '1');
+  fd.append('weight_kg', state.values.weight);
+  fd.append('height_cm', state.values.height);
+  fd.append('waist_inch', state.values.waist);
+  if (isFemale && state.values.chest) fd.append('chest_inch', state.values.chest);
+  if (isFemale && state.values.hip) fd.append('hip_inch', state.values.hip);
+  state.photos.forEach((p, i) => fd.append(photoKeys[i], p.file, `${photoKeys[i]}.jpg`));
+
+  state.busy = true;
+  surface.innerHTML = '<div class="loading" role="status"><div class="spinner"></div><h2>กำลังประมวลผลขนาดของคุณ</h2><p class="sub">วิเคราะห์สัดส่วนและภาพถ่ายด้วยระบบ AI อาจใช้เวลาสักครู่</p></div>';
+
+  let res, body;
+  try {
+    const signal = AbortSignal.timeout ? AbortSignal.timeout(REQUEST_TIMEOUT_MS) : undefined;
+    res = await fetch(`${API_BASE}/predict/suit/from-photos`, { method: 'POST', body: fd, signal });
+    body = await res.json().catch(() => ({}));
+  } catch (e) {
+    state.busy = false;
+    go(2);
+    return error(e?.name === 'TimeoutError' || e?.name === 'AbortError'
+      ? 'ระบบใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง'
+      : 'เชื่อมต่อระบบประเมินไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่');
+  }
+  state.busy = false;
+
+  if (res.ok && body?.success) {
+    state.result = body;
+    state.failedPhotos = [];
+    go(3);
+    return;
+  }
+
+  // รูปที่ตรวจจับร่างกายไม่ได้ → กลับไปหน้าภาพถ่าย ชี้ว่ามุมไหนต้องถ่ายใหม่
+  const failed = body?.detail?.failed_photos || body?.detail?.missing || [];
+  if (res.status === 422 && failed.length) {
+    state.failedPhotos = failed;
+    state.max = 1;
+    go(1);
+    return;
+  }
+
+  go(2);
+  const msg = apiMessage(body?.detail);
+  if (res.status === 413) return error(msg || 'ไฟล์ภาพใหญ่เกินไป กรุณาเลือกภาพที่เล็กลง');
+  if (res.status === 503 || res.status === 429) return error('ขณะนี้มีผู้ใช้งานจำนวนมาก กรุณารอสักครู่แล้วลองใหม่');
+  if (res.status === 504) return error('ระบบใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง');
+  if (res.status === 400 || res.status === 415 || res.status === 422) return error(msg || 'ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง');
+  return error('ระบบประเมินยังไม่พร้อมใช้งาน กรุณาลองใหม่ภายหลัง');
+}
+
+// ย่อรูปเฉพาะที่เกินขีดจำกัดของ API — รูปปกติส่งไฟล์เดิม เพื่อไม่ให้ผลโมเดลเปลี่ยน
+async function fitForUpload(file, img) {
+  const pixels = img.naturalWidth * img.naturalHeight;
+  if (file.size <= MAX_UPLOAD_BYTES && pixels <= MAX_UPLOAD_PIXELS) return file;
+  const scale = Math.min(1, Math.sqrt((MAX_UPLOAD_PIXELS * 0.6) / pixels), 4000 / Math.max(img.naturalWidth, img.naturalHeight));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(img.naturalWidth * scale);
+  canvas.height = Math.round(img.naturalHeight * scale);
+  canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+  for (const q of [0.92, 0.85, 0.75]) {
+    const blob = await new Promise(ok => canvas.toBlob(ok, 'image/jpeg', q));
+    if (blob && blob.size <= MAX_UPLOAD_BYTES) return blob;
+  }
+  throw new Error('too large');
+}
+
 async function loadPhoto(i, file) {
   if (!file) return;
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 10 * 1024 * 1024) {
-    return error('เลือกไฟล์ JPG, PNG หรือ WebP ขนาดไม่เกิน 10 MB');
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    return error('เลือกไฟล์ JPG, PNG หรือ WebP');
   }
   const url = URL.createObjectURL(file);
   const img = new Image();
@@ -299,41 +368,36 @@ async function loadPhoto(i, file) {
       img.onerror = no;
       img.src = url;
     });
-    if (state.photos[i]?.url && !state.photos[i]?.sample) URL.revokeObjectURL(state.photos[i].url);
-    state.photos[i] = { url, sample: false };
-    state.max = 1;
-    render();
   } catch {
     URL.revokeObjectURL(url);
-    error('เปิดภาพนี้ไม่ได้ กรุณาลองเลือกภาพอื่น');
+    return error('เปิดภาพนี้ไม่ได้ กรุณาลองเลือกภาพอื่น');
   }
-}
-
-function sample() {
-  if (state.busy) return;
-  state.values = { height: '175', weight: '70', waist: '32', hip: '', chest: '' };
-  state.gender = 'male';
-  state.photos.forEach(p => { if (p?.url && !p?.sample) URL.revokeObjectURL(p.url); });
-  // Load real sample images from suitcube-ml
-  state.photos = samplePhotoUrls.map((url, i) => ({
-    url: url,
-    sample: true,
-    angle: angles[i]
-  }));
-  state.sample = true;
+  let upload;
+  try {
+    upload = await fitForUpload(file, img);
+  } catch {
+    URL.revokeObjectURL(url);
+    return error('ภาพนี้ใหญ่เกินไป กรุณาเลือกภาพอื่น');
+  }
+  if (state.photos[i]?.url) URL.revokeObjectURL(state.photos[i].url);
+  state.photos[i] = { url, file: upload };
+  state.failedPhotos = state.failedPhotos.filter(k => k !== photoKeys[i]);
+  state.result = null;
   state.max = 1;
-  go(0);
+  render();
 }
 
 function reset() {
-  state.photos.forEach(p => { if (p?.url && !p?.sample) URL.revokeObjectURL(p.url); });
+  state.photos.forEach(p => { if (p?.url) URL.revokeObjectURL(p.url); });
   Object.assign(state, {
     step: 0,
     max: 0,
     gender: 'male',
     values: { height: '', weight: '', waist: '', hip: '', chest: '' },
     photos: [null, null, null, null],
-    sample: false,
+    failedPhotos: [],
+    consent: false,
+    result: null,
     busy: false
   });
   render();
@@ -343,7 +407,7 @@ function reset() {
 const help = {
   how: [
     'วิธีใช้งาน SUITCUBE AI',
-    '<ol><li>กรอกข้อมูลสัดส่วนเบื้องต้น (ส่วนสูง, น้ำหนัก, รอบเอวกางเกง)</li><li>เตรียมภาพถ่ายเต็มตัวทั้ง 4 มุม (หน้า, หลัง, ซ้าย, ขวา) ตามคำแนะนำ</li><li>ตรวจสอบข้อมูลเพื่อดูผลการประเมิน</li><li>รับผลสรุปขนาดเสื้อสูทตัวอย่าง พร้อมปรึกษาสไตลิสต์เพิ่มเติม</li></ol><p>สามารถกด <strong>“ลองด้วยข้อมูลตัวอย่าง”</strong> เพื่อทดสอบโฟลว์ระบบได้ทันที</p>'
+    '<ol><li>กรอกข้อมูลสัดส่วนเบื้องต้น (ส่วนสูง, น้ำหนัก, รอบเอวกางเกง)</li><li>เตรียมภาพถ่ายเต็มตัวทั้ง 4 มุม (หน้า, หลัง, ซ้าย, ขวา) ตามคำแนะนำ</li><li>ตรวจสอบข้อมูล แล้วกดยืนยันส่งประเมิน</li><li>รับผลขนาดเสื้อสูทที่แนะนำ ทีมงาน SUITCUBE จะตรวจสอบอีกครั้งก่อนสั่งตัด</li></ol>'
   ],
   photo: [
     'เตรียมภาพถ่ายอย่างไร',
@@ -360,7 +424,6 @@ const help = {
         <li>ตั้งระดับกล้องตรง พื้นหลังเรียบ และมีแสงสว่างสม่ำเสมอ</li>
         <li>ถ่ายให้ครบทั้ง 4 ด้าน: หน้า, หลัง, ซ้าย และขวา</li>
       </ol>
-      <p>เดโมนี้ทำงานบนอุปกรณ์ของคุณ ไม่มีการอัปโหลดภาพขึ้นระบบเซิร์ฟเวอร์</p>
     `
   ],
   waist: [
@@ -372,15 +435,14 @@ const help = {
   ],
   privacy: [
     'ข้อมูลและความเป็นส่วนตัว',
-    '<p>ข้อมูลและภาพถ่ายที่คุณระบุในหน้าเดโมนี้จะถูกเก็บไว้ในหน่วยความจำของเบราว์เซอร์บนเครื่องคุณเท่านั้น ไม่มีการส่งรูปหรือบันทึกข้อมูลส่วนบุคคลขึ้นเซิร์ฟเวอร์</p><p>ผลประเมินขนาดเป็นชุดข้อมูลสาธิตสำหรับทดสอบประสบการณ์การใช้งาน (UX/UI Demo)</p>'
+    `<p><strong>ข้อมูลที่เก็บ:</strong> เพศ ส่วนสูง น้ำหนัก รอบเอวกางเกง (และรอบอก รอบสะโพกสำหรับสูทผู้หญิง) พร้อมภาพถ่ายเต็มตัว 4 มุม</p>
+     <p><strong>ใช้เพื่อ:</strong> ประเมินขนาดเสื้อสูทด้วยระบบ AI และให้ทีมงาน SUITCUBE ตรวจสอบความถูกต้องก่อนแนะนำหรือสั่งตัด</p>
+     <p><strong>เมื่อไหร่ถูกส่ง:</strong> ข้อมูลและภาพอยู่บนเครื่องของคุณจนกว่าจะติ๊กยินยอมและกดส่งประเมินในขั้นตอนตรวจสอบ</p>
+     <p>หากต้องการสอบถามหรือขอให้ลบข้อมูล ติดต่อทีมงานผ่าน <a href="https://www.suitcube.com/" target="_blank" rel="noopener">เว็บไซต์ SUITCUBE ↗</a></p>`
   ],
   stylist: [
     'ปรึกษาสไตลิสต์ SUITCUBE',
     '<p>หากคุณต้องการคำแนะนำเรื่องการเลือกทรงสูท สีผ้า หรือต้องการจองคิววัดตัวจริงที่สาขา สามารถติดต่อทีมสไตลิสต์ผู้เชี่ยวชาญของ SUITCUBE ได้โดยตรง</p><p><a href="https://www.suitcube.com/" target="_blank" rel="noopener">ไปยังเว็บไซต์ทางการ SUITCUBE ↗</a></p>'
-  ],
-  login: [
-    'เข้าสู่ระบบสมาชิก SUITCUBE',
-    '<p>หากคุณเคยมีประวัติการวัดตัวหรือเคยตัดสูทกับทาง SUITCUBE มาก่อน สามารถเข้าสู่ระบบเพื่อดึงข้อมูลสัดส่วนเดิมมาใช้เทียบเคียงขนาดได้ทันที</p><p><em>(ฟังก์ชันนี้เป็นส่วนหนึ่งของการสาธิต UX Demo ในระบบจริงจะเชื่อมต่อกับบัญชีสมาชิก)</em></p>'
   ],
   reset: [
     'เริ่มใหม่ทั้งหมด?',
@@ -421,8 +483,9 @@ document.addEventListener('click', e => {
   const remove = e.target.closest('[data-remove]');
   if (remove) {
     const i = Number(remove.dataset.remove);
-    if (state.photos[i]?.url && !state.photos[i]?.sample) URL.revokeObjectURL(state.photos[i].url);
+    if (state.photos[i]?.url) URL.revokeObjectURL(state.photos[i].url);
     state.photos[i] = null;
+    state.result = null;
     state.max = 1;
     render();
   }
@@ -449,7 +512,6 @@ document.querySelectorAll('.mob-dot').forEach(dot => {
   });
 });
 
-document.querySelector('#sample')?.addEventListener('click', sample);
 document.querySelector('#close-dialog')?.addEventListener('click', () => document.querySelector('#dialog').close());
 
 // Initial Render
@@ -459,25 +521,13 @@ render();
 if (document.modelContext?.registerTool) {
   for (const tool of [
     {
-      name: 'read_fitting_demo_step',
-      description: 'Read current demo step and image count, without returning personal measurements or images.',
+      name: 'read_fitting_step',
+      description: 'Read current fitting step and image count, without returning personal measurements or images.',
       inputSchema: { type: 'object', properties: {}, additionalProperties: false },
       annotations: { readOnlyHint: true },
       execute(input) {
         if (!input || Object.keys(input).length) throw Error('Expected empty input');
-        return { step: state.step + 1, label: labels[state.step], photoCount: state.photos.filter(Boolean).length, isDemo: true };
-      }
-    },
-    {
-      name: 'load_fitting_demo_sample',
-      description: 'Replace current form and photos with explicit sample demo data, then show the first step.',
-      inputSchema: { type: 'object', properties: { confirmReplace: { type: 'boolean' } }, required: ['confirmReplace'], additionalProperties: false },
-      annotations: { readOnlyHint: false },
-      execute(input) {
-        if (input?.confirmReplace !== true || Object.keys(input).length !== 1) throw Error('confirmReplace must be true');
-        if (state.busy) throw Error('Please wait for current step');
-        sample();
-        return { step: 1, sampleLoaded: true };
+        return { step: state.step + 1, label: labels[state.step], photoCount: state.photos.filter(Boolean).length };
       }
     }
   ]) {

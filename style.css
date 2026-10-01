@@ -298,46 +298,84 @@ main {
 }
 
 /* ==========================================================================
-   Quick Demo Bar
+   Consent, Retake & Result Notes
    ========================================================================== */
-.demo-quick-bar {
+.consent {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
-  background: #FFFFFF;
-  border: 1px dashed #D6D0C2;
-  border-radius: 10px;
-  padding: 10px 18px;
-  margin-bottom: 24px;
+  margin: 22px 0 4px;
+  padding: 14px 16px;
+  background: var(--bg-accent-light);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-inner);
   font-size: 13px;
-}
-
-.demo-badge {
-  background: var(--gold-light);
-  color: var(--gold-dark);
-  font-weight: 600;
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  letter-spacing: 0.8px;
-}
-
-.demo-info {
+  line-height: 1.65;
   color: var(--ink-secondary);
-  flex: 1;
+  cursor: pointer;
 }
 
-.demo-sample-btn {
+.consent input {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--gold-primary);
+  cursor: pointer;
+}
+
+.inline-link {
   color: var(--gold-dark);
-  font-weight: 500;
+  font-size: inherit;
   text-decoration: underline;
-  text-underline-offset: 4px;
-  font-size: 13px;
-  transition: opacity 0.15s;
+  text-underline-offset: 3px;
 }
 
-.demo-sample-btn:hover {
-  opacity: 0.8;
+.photo-card.photo-failed {
+  border: 1.5px solid #C0392B;
+  background: #FDF6F5;
+}
+
+.retake-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: #C0392B;
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.result-alert {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius-inner);
+  background: #FDF6F5;
+  border: 1px solid #F0D4D0;
+  color: #9E3226;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.result-notes {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  list-style: none; /* ข้อความเตือนจาก API มีไอคอนนำหน้าอยู่แล้ว */
+  border-radius: var(--radius-inner);
+  background: var(--bg-accent-light);
+  color: var(--ink-secondary);
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+
+.result-notes li + li {
+  margin-top: 6px;
+}
+
+.workspace-footer.workspace-footer-single {
+  grid-template-columns: 1fr;
 }
 
 /* ==========================================================================
@@ -1526,7 +1564,7 @@ dialog a {
 }
 
 @media print {
-  header, footer, .steps-column, .guide-column, .hero-section, .demo-quick-bar, .mobile-stepper, .workspace-footer, .journey-section, .actions {
+  header, footer, .steps-column, .guide-column, .hero-section, .mobile-stepper, .workspace-footer, .journey-section, .actions {
     display: none !important;
   }
   .workspace-card {
