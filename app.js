@@ -50,10 +50,61 @@ const state = {
   failedPhotos: [],
   consent: false,
   result: null,
-  busy: false
+  busy: false,
+  errorMsg: '',      // ข้อความ error ของขั้นปัจจุบัน (เก็บใน state เพราะ render เป็น async)
+  justAdded: null,   // index รูปที่เพิ่งอัปโหลด — ให้ fade เข้าเฉพาะใบนั้น
+  loadingTimer: null
 };
 
 const surface = document.querySelector('#surface');
+
+/* ── Motion ──────────────────────────────────────────────────────────────
+   เปลี่ยนเนื้อหาในการ์ดแบบลื่น: จางของเก่าออก → วางของใหม่ → ให้แต่ละส่วนลอยขึ้นทีละชิ้น
+   พร้อมไล่ความสูงการ์ดให้ตามไปด้วย ปิดทั้งหมดเมื่อผู้ใช้ตั้ง prefers-reduced-motion */
+const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EASE_OUT = 'cubic-bezier(.22, .61, .36, 1)';
+let navToken = 0;
+
+async function transition(renderFn, dir = 1) {
+  const token = ++navToken;
+  const canAnimate = !reduceMotion();
+  const hadContent = surface.children.length > 0;
+  const h0 = surface.offsetHeight;
+  if (canAnimate && hadContent) {
+    try {
+      await surface.animate(
+        [{ opacity: 1, transform: 'translateX(0)' }, { opacity: 0, transform: `translateX(${dir * -10}px)` }],
+        { duration: 150, easing: 'ease-in', fill: 'forwards' }
+      ).finished;
+    } catch { /* ถูกยกเลิกเพราะมีการเปลี่ยนขั้นซ้อน — ปล่อยให้รอบใหม่จัดการ */ }
+  }
+  if (token !== navToken) return false;
+  renderFn();
+  surface.getAnimations().forEach(a => a.cancel());
+  if (canAnimate) {
+    surface.style.setProperty('--dx', `${dir * 18}px`);
+    // ชิ้นที่ลอยขึ้น: ลูกตรงของ surface ยกเว้น result-layout ซึ่งแตกเป็นการ์ดย่อยแทน
+    surface.querySelectorAll(':scope > :not(.result-layout), .result-layout > .result-side > *, .result-layout > .measure-card')
+      .forEach((el, i) => { el.classList.add('rise'); el.style.setProperty('--i', i); });
+    const h1 = surface.offsetHeight;
+    if (hadContent && Math.abs(h1 - h0) > 4) {
+      surface.style.overflow = 'hidden';
+      surface.animate([{ height: `${h0}px` }, { height: `${h1}px` }], { duration: 320, easing: EASE_OUT })
+        .finished.catch(() => {}).finally(() => { surface.style.overflow = ''; });
+    }
+  }
+  return true;
+}
+
+// เลื่อนให้เห็นหัวการ์ดเมื่อผู้ใช้เลื่อนลงมาไกลแล้ว (ถ้ายังอยู่ด้านบน ปล่อย hero ไว้ตามเดิม)
+function scrollToWorkspace() {
+  const mobile = document.querySelector('.mobile-stepper');
+  const anchor = (mobile && getComputedStyle(mobile).display !== 'none') ? mobile : document.querySelector('.workspace-card');
+  if (!anchor) return;
+  const headerH = document.querySelector('header')?.offsetHeight || 0;
+  const target = anchor.getBoundingClientRect().top + window.scrollY - headerH - 12;
+  if (window.scrollY > target + 40) window.scrollTo({ top: target, behavior: reduceMotion() ? 'auto' : 'smooth' });
+}
 
 // ไอคอนจากชุด SUITCUBE-AI-Result-Assets (stroke = currentColor ให้สีตาม CSS ของแต่ละจุด)
 const svg = (body, cls = 'ic') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
@@ -77,21 +128,24 @@ const escapeText = v => String(v).replace(/[&<>"']/g, c => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 }[c]));
 
-function go(n) {
+async function go(n) {
   if (state.busy) return;
+  const dir = n >= state.step ? 1 : -1;
   state.step = n;
   state.max = Math.max(state.max, n);
-  render();
+  state.errorMsg = '';
+  if (!(await transition(render, dir))) return;
   surface.querySelector('h2')?.focus({ preventScroll: true });
+  scrollToWorkspace();
 }
 
-function field(key, title, unit, min, max) {
+function field(key, title, unit, min, max, disabled = false) {
   const isWaist = key === 'waist';
   return `
     <div class="field">
       <label for="${key}">${title}</label>
       <div class="input-wrap">
-        <input id="${key}" name="${key}" type="number" inputmode="decimal" step="any" min="${min}" max="${max}" required value="${escapeText(state.values[key])}" autocomplete="off">
+        <input id="${key}" name="${key}" type="number" inputmode="decimal" step="any" min="${min}" max="${max}" required ${disabled ? 'disabled' : ''} value="${escapeText(state.values[key])}" autocomplete="off">
         <span class="unit-tag">${unit}</span>
         ${isWaist ? '<button type="button" class="inline-help-btn" data-help="waist" aria-label="วิธีดูรอบเอวกางเกง">?</button>' : ''}
       </div>
@@ -100,23 +154,23 @@ function field(key, title, unit, min, max) {
   `;
 }
 
-function render() {
-  // 0. Show the preparation guide panel only on step 1; result page uses the full card width
-  document.querySelector('#workspace-body')?.classList.toggle('no-guide', state.step !== 0);
-  document.querySelector('#workspace-body')?.classList.toggle('result-mode', state.step === 3);
+let stepperKey = '';
+// วาด stepper ใหม่เฉพาะตอนขั้น/สิทธิ์เปลี่ยน — ไม่งั้นแอนิเมชันจุด active จะเล่นซ้ำทุกครั้งที่อัปโหลดรูป
+function renderStepper(force = false) {
+  const key = `${state.step}|${state.max}|${state.busy}`;
+  if (!force && key === stepperKey) return;
+  stepperKey = key;
 
-  // 1. Render Desktop Stepper
   const stepsEl = document.querySelector('#steps');
   if (stepsEl) {
     stepsEl.innerHTML = labels.map((l, i) => `
       <button class="step ${i === state.step ? 'active' : i < state.step ? 'complete' : ''}" ${i > state.max || state.busy ? 'disabled' : ''} data-step="${i}" ${i === state.step ? 'aria-current="step"':''}>
-        <b>${i < state.step ? '✓' : i + 1}</b>
+        <b>${i < state.step ? ICON.check : i + 1}</b>
         <span>${l}</span>
       </button>
     `).join('');
   }
 
-  // 2. Update Mobile Stepper Indicator
   const mobStepNum = document.querySelector('#mobile-step-num');
   if (mobStepNum) mobStepNum.textContent = state.step + 1;
   document.querySelectorAll('.mob-dot').forEach((dot, idx) => {
@@ -124,6 +178,17 @@ function render() {
     dot.classList.toggle('complete', idx < state.step);
     dot.style.cursor = idx <= state.max ? 'pointer' : 'default';
   });
+}
+
+function render() {
+  clearInterval(state.loadingTimer);
+
+  // 0. Show the preparation guide panel only on step 1; result page uses the full card width
+  document.querySelector('#workspace-body')?.classList.toggle('no-guide', state.step !== 0);
+  document.querySelector('#workspace-body')?.classList.toggle('result-mode', state.step === 3);
+
+  // 1-2. Steppers (desktop + mobile)
+  renderStepper();
 
   // 3. Render Step Content
   let body = '';
@@ -131,7 +196,7 @@ function render() {
     body = `
       <h2 tabindex="-1">ข้อมูลเบื้องต้น</h2>
       <p class="sub">เริ่มจากข้อมูลที่คุณทราบ</p>
-      <div class="gender" role="group" aria-label="ประเภทสูท">
+      <div class="gender" role="group" aria-label="ประเภทสูท" data-gender="${state.gender}">
         <button type="button" data-gender="male" class="${state.gender === 'male' ? 'selected' : ''}" aria-pressed="${state.gender === 'male'}">สูทผู้ชาย</button>
         <button type="button" data-gender="female" class="${state.gender === 'female' ? 'selected' : ''}" aria-pressed="${state.gender === 'female'}">สูทผู้หญิง</button>
       </div>
@@ -139,7 +204,12 @@ function render() {
         ${field('height', 'ส่วนสูง', 'cm', 100, 230)}
         ${field('weight', 'น้ำหนัก', 'kg', 25, 250)}
         ${field('waist', 'รอบเอวกางเกง', 'นิ้ว', 20, 70)}
-        ${state.gender === 'female' ? field('chest', 'รอบอก', 'นิ้ว', 20, 70) + field('hip', 'รอบสะโพก', 'นิ้ว', 20, 80) : ''}
+        <div class="female-fields ${state.gender === 'female' ? 'open' : ''}">
+          <div class="female-fields-inner">
+            ${field('chest', 'รอบอก', 'นิ้ว', 20, 70, state.gender !== 'female')}
+            ${field('hip', 'รอบสะโพก', 'นิ้ว', 20, 80, state.gender !== 'female')}
+          </div>
+        </div>
         <div class="actions">
           <button class="primary" type="submit">ถัดไป: เตรียมภาพถ่าย <span aria-hidden="true">→</span></button>
         </div>
@@ -152,7 +222,7 @@ function render() {
       <p class="sub">เตรียมภาพเต็มตัวทั้ง 4 มุม (เห็นศีรษะถึงปลายเท้า)</p>
       <div class="photos">
         ${angles.map((a, i) => `
-          <div class="photo-card ${state.failedPhotos.includes(photoKeys[i]) ? 'photo-failed' : ''}">
+          <div class="photo-card ${state.failedPhotos.includes(photoKeys[i]) ? 'photo-failed' : ''} ${state.justAdded === i ? 'just-added' : ''}">
             <div class="photo-preview ${state.photos[i] ? 'has-image' : ''}">
               ${state.photos[i] ? `
                 <img src="${state.photos[i].url}" alt="ภาพ${a}">
@@ -173,7 +243,7 @@ function render() {
       </div>
       <p class="privacy">รองรับ JPG, PNG, WebP · ภาพขนาดใหญ่จะถูกย่อให้อัตโนมัติ<br>ภาพยังอยู่ในเครื่องของคุณจนกว่าจะกดยืนยันส่งในขั้นตอนถัดไป</p>
       <button type="button" class="text-button" data-help="photo">ดูวิธีถ่ายภาพทั้ง 4 มุม ↗</button>
-      <p class="error" id="error" role="alert">${state.failedPhotos.length
+      <p class="error" id="error" role="alert">${state.errorMsg ? escapeText(state.errorMsg) : state.failedPhotos.length
         ? `ระบบตรวจจับร่างกายในภาพ${state.failedPhotos.map(k => angles[photoKeys.indexOf(k)]).join(', ')}ไม่ได้ — กรุณาถ่ายใหม่ให้เห็นศีรษะถึงปลายเท้า พื้นหลังเรียบ แสงพอ`
         : ''}</p>
       <div class="actions">
@@ -214,7 +284,7 @@ function render() {
         <button type="button" class="inline-link" data-help="privacy">อ่านรายละเอียด</button></span>
       </label>
 
-      <p class="error" id="error" role="alert"></p>
+      <p class="error" id="error" role="alert">${escapeText(state.errorMsg)}</p>
       <div class="actions">
         <button type="button" class="secondary" data-step="1">ย้อนกลับ</button>
         <button type="button" class="primary" id="result" ${state.consent ? '' : 'disabled'}>ส่งประเมินด้วย AI →</button>
@@ -344,8 +414,38 @@ function bind() {
 }
 
 function error(t) {
+  state.errorMsg = t;
   const el = document.querySelector('#error');
   if (el) el.textContent = t;
+}
+
+const LOADING_STEPS = ['กำลังตรวจสอบภาพถ่ายทั้ง 4 มุม', 'กำลังวิเคราะห์สัดส่วนร่างกาย', 'กำลังคำนวณขนาดเสื้อสูท', 'กำลังตรวจกับกฎช่างตัด'];
+
+function loadingHTML() {
+  return `<div class="loading" role="status">
+    <div class="spinner"></div>
+    <h2>กำลังประมวลผลขนาดของคุณ</h2>
+    <p class="sub loading-status">${LOADING_STEPS[0]}</p>
+    <p class="loading-hint">ใช้เวลาประมาณ 5–10 วินาที</p>
+  </div>`;
+}
+
+// สลับข้อความสถานะทุก 2.2 วินาที ให้รู้ว่าระบบยังทำงานอยู่ (render() ครั้งถัดไปจะหยุดให้เอง)
+function startLoadingTicker() {
+  let i = 0;
+  state.loadingTimer = setInterval(() => {
+    const el = surface.querySelector('.loading-status');
+    if (!el) return clearInterval(state.loadingTimer);
+    i = (i + 1) % LOADING_STEPS.length;
+    const swap = () => { el.textContent = LOADING_STEPS[i]; };
+    if (reduceMotion()) return swap();
+    el.animate([{ opacity: 1, transform: 'translateY(0)' }, { opacity: 0, transform: 'translateY(-4px)' }], { duration: 180, easing: 'ease-in', fill: 'forwards' })
+      .finished.then(() => {
+        swap();
+        el.getAnimations().forEach(a => a.cancel());
+        el.animate([{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 220, easing: 'ease-out' });
+      }).catch(() => {});
+  }, 2200);
 }
 
 // อ่านข้อความจาก detail ของ API (เป็นได้ทั้ง string, {message,...} หรือ list ของ pydantic)
@@ -371,7 +471,7 @@ async function submitPrediction() {
   state.photos.forEach((p, i) => fd.append(photoKeys[i], p.file, `${photoKeys[i]}.jpg`));
 
   state.busy = true;
-  surface.innerHTML = '<div class="loading" role="status"><div class="spinner"></div><h2>กำลังประมวลผลขนาดของคุณ</h2><p class="sub">วิเคราะห์สัดส่วนและภาพถ่ายด้วยระบบ AI อาจใช้เวลาสักครู่</p></div>';
+  await transition(() => { surface.innerHTML = loadingHTML(); startLoadingTicker(); }, 1);
 
   let res, body;
   try {
@@ -456,8 +556,11 @@ async function loadPhoto(i, file) {
   state.photos[i] = { url, file: upload };
   state.failedPhotos = state.failedPhotos.filter(k => k !== photoKeys[i]);
   state.result = null;
+  state.errorMsg = '';
   state.max = 1;
+  state.justAdded = i;
   render();
+  state.justAdded = null;
 }
 
 function reset() {
@@ -474,7 +577,7 @@ function reset() {
     busy: false
   });
   render();
-  document.querySelector('#dialog').close();
+  closeDialog();
 }
 
 const help = {
@@ -541,11 +644,28 @@ document.addEventListener('click', e => {
   }
 
   // Gender Toggle
-  const gender = e.target.closest('[data-gender]');
+  const gender = e.target.closest('.gender [data-gender]');
   if (gender) {
     state.gender = gender.dataset.gender;
     state.max = 0;
-    render();
+    state.result = null;
+    const g = document.querySelector('.gender');
+    if (state.step === 0 && g) {
+      // อัปเดตในที่ ไม่วาดใหม่ทั้งฟอร์ม → แถบเลือกเลื่อน + ช่องรอบอก/สะโพกกางออกแบบลื่น
+      g.dataset.gender = state.gender;
+      g.querySelectorAll('button').forEach(b => {
+        const sel = b.dataset.gender === state.gender;
+        b.classList.toggle('selected', sel);
+        b.setAttribute('aria-pressed', sel);
+      });
+      const isFemale = state.gender === 'female';
+      const ff = document.querySelector('.female-fields');
+      ff?.classList.toggle('open', isFemale);
+      ff?.querySelectorAll('input').forEach(inp => { inp.disabled = !isFemale; });
+      renderStepper(true);
+    } else {
+      render();
+    }
   }
 
   // Help Modal Dialogs
@@ -585,10 +705,37 @@ document.querySelectorAll('.mob-dot').forEach(dot => {
   });
 });
 
-document.querySelector('#close-dialog')?.addEventListener('click', () => document.querySelector('#dialog').close());
+// ปิด dialog แบบมีแอนิเมชันออก (Esc และคลิกนอกกล่องก็ใช้ทางนี้)
+function closeDialog() {
+  const d = document.querySelector('#dialog');
+  if (!d?.open) return;
+  if (reduceMotion()) return d.close();
+  d.classList.add('is-closing');
+  d.addEventListener('animationend', () => { d.classList.remove('is-closing'); d.close(); }, { once: true });
+}
+document.querySelector('#close-dialog')?.addEventListener('click', closeDialog);
+document.querySelector('#dialog')?.addEventListener('cancel', e => { e.preventDefault(); closeDialog(); });
+document.querySelector('#dialog')?.addEventListener('click', e => {
+  const r = e.currentTarget.getBoundingClientRect();
+  if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeDialog();
+});
 
-// Initial Render
-render();
+// Hero parallax เบาๆ (เฉพาะจอกว้างที่แสดงรูป และผู้ใช้ไม่ได้ปิดการเคลื่อนไหว)
+const heroImg = document.querySelector('.hero-bg-img');
+if (heroImg) {
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (ticking || reduceMotion() || !window.matchMedia('(min-width: 861px)').matches) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      heroImg.style.transform = `translateY(${Math.min(window.scrollY * 0.15, 54)}px)`;
+      ticking = false;
+    });
+  }, { passive: true });
+}
+
+// Initial Render (ลอยขึ้นเบาๆ ตอนโหลดหน้า)
+transition(render, 1);
 
 // Model Context Tools for Assistant Integration
 if (document.modelContext?.registerTool) {
