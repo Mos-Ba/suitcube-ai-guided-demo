@@ -1117,74 +1117,8 @@ main {
 /* ==========================================================================
    Result Page (Step 4) — full card width, size card + measurements
    ========================================================================== */
-/* id selector: ต้องชนะ .workspace-body.no-guide ใน media query 1080px */
-#workspace-body.result-mode {
-  grid-template-columns: 1fr;
-}
-
-#workspace-body.result-mode .steps-column {
-  display: none;
-}
-
 #workspace-body.result-mode .surface-column {
   padding: 34px 40px 40px;
-}
-
-.result-stepper {
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  max-width: 720px;
-  margin: 0 auto 30px;
-}
-
-.result-stepper li {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--ink-secondary);
-  text-align: center;
-}
-
-.result-stepper li::before {
-  content: '';
-  position: absolute;
-  top: 15px;
-  left: -50%;
-  width: 100%;
-  height: 1.5px;
-  background: var(--gold-primary);
-}
-
-.result-stepper li:first-child::before {
-  display: none;
-}
-
-.result-stepper b {
-  position: relative;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--gold-primary);
-  color: #FFFFFF;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.result-stepper b .ic {
-  width: 16px;
-  height: 16px;
-  stroke-width: 2;
-}
-
-.result-stepper li.current span {
-  color: var(--ink-primary);
-  font-weight: 600;
 }
 
 .result-title {
@@ -1448,6 +1382,29 @@ main {
   align-items: center;
   justify-content: center;
   gap: 10px;
+  white-space: nowrap;
+}
+
+/* ปุ่มเรียงตามความกว้างของการ์ดเอง (มีคอลัมน์ขั้นตอนด้านซ้าย การ์ดจึงแคบได้แม้จอกว้าง) */
+.measure-card {
+  container-type: inline-size;
+}
+
+@container (max-width: 500px) {
+  .result-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .result-actions .text-button {
+    grid-column: 1 / -1;
+    justify-self: center;
+  }
+}
+
+@container (max-width: 340px) {
+  .result-actions {
+    grid-template-columns: 1fr;
+  }
 }
 
 .result-actions .ic {
@@ -1814,10 +1771,6 @@ dialog a {
    Result Page — phone / tablet (≤860px) and print
    ========================================================================== */
 @media (max-width: 860px) {
-  .result-stepper {
-    display: none; /* ใช้ mobile-stepper ด้านบนการ์ดแทน */
-  }
-
   #workspace-body.result-mode .surface-column {
     padding: 22px 16px 24px;
   }
@@ -1907,7 +1860,6 @@ dialog a {
     margin: 0 auto 14px;
   }
 
-  .result-stepper,
   .result-actions,
   .edit-link,
   .mobile-stepper {

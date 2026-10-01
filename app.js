@@ -215,11 +215,6 @@ function render() {
       ...(typeof r.bmi === 'number' ? [[ICON.bmi, `BMI ${r.bmi}`]] : [])
     ];
     body = `
-      <ol class="result-stepper" aria-label="ขั้นตอน">
-        ${labels.map((l, i) => `
-          <li class="${i < 3 ? 'done' : 'current'}"><b>${i < 3 ? ICON.check : i + 1}</b><span>${i + 1}. ${l}</span></li>
-        `).join('')}
-      </ol>
 
       <img src="images/suitcube-ai-logo.png" alt="SUITCUBE AI" class="print-only print-logo">
       <div class="result-title">
