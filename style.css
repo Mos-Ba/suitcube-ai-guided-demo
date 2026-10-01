@@ -2624,3 +2624,23 @@ header {
     display: none;
   }
 }
+
+/* โหมดพรีวิว (GitHub Pages) — บอกชัดว่าเป็นผลตัวอย่าง */
+.preview-note {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--gold-dark);
+}
+.preview-banner {
+  margin: 0 0 18px;
+  padding: 12px 16px;
+  border-radius: var(--radius-inner);
+  border: 1px dashed var(--gold-primary);
+  background: var(--gold-light);
+  color: #6B4E17;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+.preview-banner b { color: #4A3610; }
+@media print { .preview-banner { border-style: solid; } }

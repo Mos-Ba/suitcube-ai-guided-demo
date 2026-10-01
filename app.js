@@ -7,6 +7,10 @@ const photoKeys = ['front', 'back', 'left', 'right'];
 const API_BASE = window.SUITCUBE_API_BASE
   || (['localhost', '127.0.0.1'].includes(location.hostname) ? `http://${location.hostname}:8000` : '/api');
 
+// โหมดพรีวิว: บน GitHub Pages ไม่มี /api — กดส่งแล้วไปหน้าผลด้วยตัวเลขตัวอย่าง (ไม่ส่งรูปออกจากเครื่อง)
+// เปิดเองได้ด้วย ?preview=1 · วางที่ measure.suitcube.com แล้วจะเรียก AI จริงอัตโนมัติ
+const PREVIEW_MODE = location.hostname.endsWith('github.io') || new URLSearchParams(location.search).has('preview');
+
 // ขีดจำกัดของ API: 8 MB และ 25 ล้านพิกเซลต่อรูป — รูปเกินจะถูกย่อในเครื่องก่อนส่ง
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 const MAX_UPLOAD_PIXELS = 25_000_000;
@@ -285,6 +289,7 @@ function render() {
       </label>
 
       <p class="error" id="error" role="alert">${escapeText(state.errorMsg)}</p>
+      ${PREVIEW_MODE ? `<p class="preview-note">โหมดพรีวิว — ยังไม่เชื่อมระบบ AI จริง ภาพถ่ายจะไม่ถูกส่งออกจากเครื่อง และผลที่แสดงเป็นตัวเลขตัวอย่าง</p>` : ''}
       <div class="actions">
         <button type="button" class="secondary" data-step="1">ย้อนกลับ</button>
         <button type="button" class="primary" id="result" ${state.consent ? '' : 'disabled'}>ส่งประเมินด้วย AI →</button>
@@ -324,6 +329,7 @@ function render() {
         <h2 tabindex="-1">ผลประเมินขนาดของคุณ</h2>
         <p class="sub">สรุปไซส์แนะนำและสัดส่วนเบื้องต้นของคุณ</p>
       </div>
+      ${r.preview ? `<p class="preview-banner"><b>ผลตัวอย่าง</b> — หน้านี้เป็นโหมดพรีวิว ตัวเลขประมาณจากข้อมูลที่กรอก ไม่ได้มาจากการประเมินด้วย AI</p>` : ''}
 
       <div class="result-layout">
         <div class="result-side">
@@ -478,6 +484,15 @@ async function submitPrediction() {
   state.busy = true;
   await transition(() => { surface.innerHTML = loadingHTML(); startLoadingTicker(); }, 1);
 
+  if (PREVIEW_MODE) {
+    await new Promise(r => setTimeout(r, reduceMotion() ? 600 : 2600));
+    state.busy = false;
+    state.result = previewResult();
+    state.failedPhotos = [];
+    go(3);
+    return;
+  }
+
   let res, body;
   try {
     const signal = AbortSignal.timeout ? AbortSignal.timeout(REQUEST_TIMEOUT_MS) : undefined;
@@ -515,6 +530,35 @@ async function submitPrediction() {
   if (res.status === 504) return error('ระบบใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง');
   if (res.status === 400 || res.status === 415 || res.status === 422) return error(msg || 'ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง');
   return error('ระบบประเมินยังไม่พร้อมใช้งาน กรุณาลองใหม่ภายหลัง');
+}
+
+// ผลตัวอย่างสำหรับโหมดพรีวิว — สัดส่วนประมาณหยาบๆ จากค่าที่กรอก ไม่ใช่โมเดล (หน้าผลติดป้ายบอกชัด)
+function previewResult() {
+  const isFemale = state.gender === 'female';
+  const h = Number(state.values.height) || 170;
+  const w = Number(state.values.weight) || 70;
+  const waist = Number(state.values.waist) || 32;
+  const bmi = Math.round((w / ((h / 100) ** 2)) * 10) / 10;
+  const q = n => Math.round(n * 4) / 4;  // ปัดเป็นทีละ 1/4 นิ้วแบบที่ช่างใช้
+  const chest = isFemale && Number(state.values.chest) ? Number(state.values.chest) : waist + (isFemale ? 5 : 7);
+  const hip = isFemale && Number(state.values.hip) ? Number(state.values.hip) : waist + 6;
+  return {
+    success: true,
+    preview: true,
+    bmi,
+    jacket_length: h < 168 ? 'S' : h > 182 ? 'L' : 'R',
+    measurements: {
+      shoulder: q(h * (isFemale ? 0.245 : 0.27) / 2.54),
+      chest: q(chest),
+      waist: q(waist + 1),
+      hip: q(hip),
+      upper_arm: q(Math.max(9, 10 + (bmi - 22) * 0.35)),
+      arm_length: q(h * 0.36 / 2.54),
+      front_length: q(h * (isFemale ? 0.4 : 0.44) / 2.54),
+      back_length: q(h * (isFemale ? 0.39 : 0.43) / 2.54)
+    },
+    warnings: []
+  };
 }
 
 // ย่อรูปเฉพาะที่เกินขีดจำกัดของ API — รูปปกติส่งไฟล์เดิม เพื่อไม่ให้ผลโมเดลเปลี่ยน
