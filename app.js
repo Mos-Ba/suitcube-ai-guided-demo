@@ -12,6 +12,10 @@ const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 const MAX_UPLOAD_PIXELS = 25_000_000;
 const REQUEST_TIMEOUT_MS = 60_000; // server ตัดที่ 45 วินาที
 
+// ค่าเผื่อตัดเสื้อสูท (นิ้ว) บวกกับค่าตัวที่ API ทำนาย ก่อนแสดงในหน้าผล
+// ไซส์ 46/48 ยังเลือกจากค่าตัวที่ API ส่งมา (ตาราง ULTIMATE FIT เป็นค่าตัว) — ห้ามใช้ค่านี้เลือกไซส์
+const GARMENT_EASE = { chest: 3, waist: 2, hip: 2, upper_arm: 1.5 };
+
 const state = {
   step: 0,
   max: 0,
@@ -201,9 +205,11 @@ function render() {
     const lengthName = { S: 'Short', R: 'Regular', L: 'Long' }[r.jacket_length] || '';
     const warnings = r.warnings || [];
     const confirmWaist = r.action_required === 'CONFIRM_WAIST';
+    // ค่าเสื้อ = ค่าตัวจาก API + ค่าเผื่อ (เฉพาะ อก/เอว/สะโพก/ต้นแขน)
+    const g = k => (typeof m[k] === 'number' ? m[k] + (GARMENT_EASE[k] || 0) : undefined);
     const measures = [
-      ['ไหล่', m.shoulder], ['อก', m.chest], ['เอว', m.waist], ['สะโพก', m.hip],
-      ['ต้นแขน', m.upper_arm], ['ยาวแขน', m.arm_length], ['ยาวหน้า', m.front_length], ['ยาวหลัง', m.back_length]
+      ['ไหล่', g('shoulder')], ['อก', g('chest')], ['เอว', g('waist')], ['สะโพก', g('hip')],
+      ['ต้นแขน', g('upper_arm')], ['ยาวแขน', g('arm_length')], ['ยาวหน้า', g('front_length')], ['ยาวหลัง', g('back_length')]
     ];
     const info = [
       [ICON.person, state.gender === 'male' ? 'ชาย' : 'หญิง'],
@@ -251,6 +257,7 @@ function render() {
             <h3>${ICON.measureTape}สัดส่วนประเมิน</h3>
             <span class="unit-pill">หน่วย: นิ้ว</span>
           </div>
+          <p class="ease-caption">อก เอว สะโพก และต้นแขน รวมค่าเผื่อสำหรับตัดเสื้อสูทแล้ว</p>
           <div class="measure-grid">
             ${measures.map(([label, v]) => `<div class="measure-item"><span>${label}</span><strong>${fmt(v)}″</strong></div>`).join('')}
           </div>
