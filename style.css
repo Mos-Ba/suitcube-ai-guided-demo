@@ -97,20 +97,16 @@ header {
   color: var(--ink-primary);
 }
 
-.brand .cube-icon {
-  display: inline-flex;
-  align-items: center;
-  margin: 0 2px;
+.brand-logo {
+  display: block;
+  height: 30px;
+  width: auto;
 }
 
-.brand small {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--gold-primary);
-  margin-left: 8px;
-  padding-left: 8px;
-  border-left: 1.5px solid var(--border-subtle);
-  letter-spacing: 1px;
+@media (max-width: 860px) {
+  .brand-logo {
+    height: 24px;
+  }
 }
 
 .desktop-nav {
