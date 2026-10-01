@@ -28,6 +28,9 @@
   --shadow-soft: 0 10px 32px rgba(25, 26, 25, 0.04);
   --shadow-card: 0 14px 44px rgba(20, 22, 20, 0.06);
   --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  /* ระยะที่การ์ดขั้นตอนขยับขึ้นไปทับรูป hero (ใช้ร่วมกับตำแหน่งป้ายใน hero) */
+  --hero-overlap: 200px;
 }
 
 *, *::before, *::after {
@@ -191,8 +194,10 @@ main {
 
 /* เนื้อหาใต้ hero ล็อกความกว้างไว้เท่าเดิม (hero กว้างเต็มจอ) */
 .main-inner {
+  position: relative; /* อยู่เหนือรูป hero ตอนขยับขึ้นไปทับ */
+  z-index: 2;
   max-width: 1280px;
-  margin: 0 auto;
+  margin: calc(-1 * var(--hero-overlap)) auto 0;
   padding: 0 32px 60px;
 }
 
@@ -289,7 +294,7 @@ main {
   position: absolute;
   z-index: 1;
   right: var(--hero-gutter);
-  bottom: 130px; /* อยู่เหนือช่วงที่จางลง ไม่งั้นตัวขาวหายไปในพื้นอ่อน */
+  bottom: calc(var(--hero-overlap) + 28px); /* อยู่เหนือการ์ดที่ขยับขึ้นมาทับ */
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -1453,6 +1458,7 @@ dialog a {
   }
   
   .main-inner {
+    margin-top: 0; /* จอเล็กไม่มีรูป hero ไม่ต้องทับ */
     padding: 0 16px 40px;
   }
 
