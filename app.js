@@ -12,9 +12,34 @@ const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 const MAX_UPLOAD_PIXELS = 25_000_000;
 const REQUEST_TIMEOUT_MS = 60_000; // server ตัดที่ 45 วินาที
 
-// ค่าเผื่อตัดเสื้อสูท (นิ้ว) บวกกับค่าตัวที่ API ทำนาย ก่อนแสดงในหน้าผล
-// ไซส์ 46/48 ยังเลือกจากค่าตัวที่ API ส่งมา (ตาราง ULTIMATE FIT เป็นค่าตัว) — ห้ามใช้ค่านี้เลือกไซส์
+// ค่าเผื่อตัดเสื้อสูท (นิ้ว) — ใช้ตอน "เลือกไซส์แนะนำ" เท่านั้น ค่าที่แสดงให้ลูกค้ายังเป็นค่าตัวจาก API
+// ตารางไซส์ปัจจุบันเทียบด้วยรอบอกอย่างเดียว จึงใช้แค่ chest; เอว/สะโพก/ต้นแขนเก็บไว้เผื่อตารางมีคอลัมน์เพิ่ม
 const GARMENT_EASE = { chest: 3, waist: 2, hip: 2, upper_arm: 1.5 };
+
+// ตารางไซส์เสื้อ (รอบอก catalog, นิ้ว) — สำเนาจาก chest_to_jacket_size ใน suitcube-ml/main.py
+// ถ้าแก้ตารางฝั่ง API ต้องแก้ตรงนี้ด้วย
+const JACKET_SIZE_TABLE = {
+  male: [['sz46', 37.0], ['sz48', 39.0], ['sz50', 41.0], ['sz52', 42.5], ['sz54', 44.0], ['sz56', 44.5], ['sz58', 46.5], ['sz60', 48.0]],
+  female: [['sz34', 34.0], ['sz36', 35.5], ['sz38', 36.5], ['sz40', 38.0], ['sz42', 41.0], ['sz44', 43.5]]
+};
+
+// เลือกไซส์ที่รอบอก catalog ใกล้ที่สุด จุดกึ่งกลางพอดีเลือกไซส์เล็ก (ตรรกะเดียวกับ API)
+function chestToJacketSize(chest, gender) {
+  const table = JACKET_SIZE_TABLE[gender];
+  for (let i = 0; i < table.length - 1; i++) {
+    if (chest <= (table[i][1] + table[i + 1][1]) / 2) return table[i][0];
+  }
+  return table[table.length - 1][0];
+}
+
+// ไซส์แนะนำ + ทางเลือก จากรอบอกที่บวกค่าเผื่อแล้ว (ทางเลือก = ±1.2" เหมือน API)
+function recommendSizes(bodyChest, gender) {
+  const chest = bodyChest + GARMENT_EASE.chest;
+  const main = chestToJacketSize(chest, gender);
+  const alts = [chestToJacketSize(chest - 1.2, gender), chestToJacketSize(chest + 1.2, gender)]
+    .filter((s, i, a) => s !== main && a.indexOf(s) === i);
+  return { main, alts };
+}
 
 const state = {
   step: 0,
@@ -201,15 +226,17 @@ function render() {
     const fmt = n => (typeof n === 'number' ? n.toFixed(2) : '–');
     // API ส่ง "sz46" — หน้าผลแสดงแค่ตัวเลขตามแบบ
     const sizeNum = s => escapeText(String(s || '–').replace(/^sz/i, ''));
-    const alts = (r.jacket_size_alternatives || []).map(sizeNum).join(', ');
+    // ไซส์แนะนำคิดใหม่จากรอบอก + ค่าเผื่อ (API ส่งไซส์ที่เทียบจากรอบอกตัวมา) — ถ้าไม่มีรอบอกใช้ของ API
+    const rec = typeof m.chest === 'number'
+      ? recommendSizes(m.chest, state.gender)
+      : { main: r.jacket_size, alts: r.jacket_size_alternatives || [] };
+    const alts = rec.alts.map(sizeNum).join(', ');
     const lengthName = { S: 'Short', R: 'Regular', L: 'Long' }[r.jacket_length] || '';
     const warnings = r.warnings || [];
     const confirmWaist = r.action_required === 'CONFIRM_WAIST';
-    // ค่าเสื้อ = ค่าตัวจาก API + ค่าเผื่อ (เฉพาะ อก/เอว/สะโพก/ต้นแขน)
-    const g = k => (typeof m[k] === 'number' ? m[k] + (GARMENT_EASE[k] || 0) : undefined);
     const measures = [
-      ['ไหล่', g('shoulder')], ['อก', g('chest')], ['เอว', g('waist')], ['สะโพก', g('hip')],
-      ['ต้นแขน', g('upper_arm')], ['ยาวแขน', g('arm_length')], ['ยาวหน้า', g('front_length')], ['ยาวหลัง', g('back_length')]
+      ['ไหล่', m.shoulder], ['อก', m.chest], ['เอว', m.waist], ['สะโพก', m.hip],
+      ['ต้นแขน', m.upper_arm], ['ยาวแขน', m.arm_length], ['ยาวหน้า', m.front_length], ['ยาวหลัง', m.back_length]
     ];
     const info = [
       [ICON.person, state.gender === 'male' ? 'ชาย' : 'หญิง'],
@@ -233,7 +260,7 @@ function render() {
           <section class="size-card" aria-label="ไซส์แนะนำ">
             <span class="size-label">ไซส์แนะนำสำหรับคุณ</span>
             <div class="size-main">
-              <span class="size-num">${sizeNum(r.jacket_size)}</span>
+              <span class="size-num">${sizeNum(rec.main)}</span>
               <span class="size-len"><b>${escapeText(r.jacket_length || '')}</b>${lengthName ? `<small>${lengthName}</small>` : ''}</span>
               <span class="result-badge">แนะนำ</span>
             </div>
@@ -257,7 +284,6 @@ function render() {
             <h3>${ICON.measureTape}สัดส่วนประเมิน</h3>
             <span class="unit-pill">หน่วย: นิ้ว</span>
           </div>
-          <p class="ease-caption">อก เอว สะโพก และต้นแขน รวมค่าเผื่อสำหรับตัดเสื้อสูทแล้ว</p>
           <div class="measure-grid">
             ${measures.map(([label, v]) => `<div class="measure-item"><span>${label}</span><strong>${fmt(v)}″</strong></div>`).join('')}
           </div>
