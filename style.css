@@ -2135,10 +2135,10 @@ dialog.is-closing::backdrop {
 /* ==========================================================================
    Direction B — "ตั๋วช่างตัด" (tailor's ticket)
    ภาษาของชิ้นส่วนมาจากโต๊ะช่าง: ป้ายทอ · ตั๋ววัดตัว · รอยเย็บ · หมุด · สายวัด · กระดาษแพตเทิร์น
-   จานสี: ครีม (กระดาษ) · navy (ผ้าสูท) · ทอง (ด้าย/ชอล์ก)   —   ฟอนต์: Trirong หัวข้อ / Prompt เนื้อหา
+   จานสี: ครีม (กระดาษ) · navy (ผ้าสูท) · ทอง (ด้าย/ชอล์ก)   —   ฟอนต์: Prompt ทั้งหมดตาม CI
    ========================================================================== */
 :root {
-  --font-display: 'Trirong', 'Prompt', serif;
+  --font-display: var(--font-main); /* CI ใช้ Prompt ทั้งหมด (ตามเว็บ suitcube.com) */
   --navy: #1C2638;
   --navy-deep: #131A28;
   --thread: #D4B06A;          /* ด้ายทองบนพื้น navy (สว่างกว่าทองหลัก) */
@@ -2169,13 +2169,14 @@ body::before {
 .process-head h2,
 dialog h2 {
   font-family: var(--font-display);
-  letter-spacing: 0;
+  letter-spacing: -0.5px;
 }
 
 .hero-title {
-  font-size: 48px;
+  font-size: 44px;
   font-weight: 600;
-  line-height: 1.12;
+  line-height: 1.15;
+  letter-spacing: -1px;
 }
 
 .hero-gold {
@@ -2184,16 +2185,17 @@ dialog h2 {
 }
 
 .surface-column h2 {
-  font-size: 27px;
+  font-size: 25px;
   font-weight: 600;
 }
 
 .surface-column .result-title h2 {
-  font-size: 34px;
+  font-size: 31px;
+  letter-spacing: -0.8px;
 }
 
 .card-head h3 {
-  font-size: 19px;
+  font-size: 18px;
 }
 
 .eyebrow {
@@ -2389,7 +2391,7 @@ header {
 .size-num {
   font-family: var(--font-display);
   font-weight: 700;
-  letter-spacing: -1px;
+  letter-spacing: -2px;
 }
 
 .size-main {
@@ -2450,8 +2452,8 @@ header {
 .ticket .measure-item strong {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 32px;
-  letter-spacing: 0;
+  font-size: 30px;
+  letter-spacing: -0.5px;
 }
 
 .soft-card:not(.ticket) {
@@ -2600,11 +2602,11 @@ header {
   }
 
   .hero-title {
-    font-size: 36px;
+    font-size: 32px;
   }
 
   .surface-column .result-title h2 {
-    font-size: 27px;
+    font-size: 24px;
   }
 
   .ticket .measure-item strong {
