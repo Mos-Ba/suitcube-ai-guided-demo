@@ -219,10 +219,11 @@ main {
   object-position: 76% 20%;
 }
 
+/* รูปเต็มทั้งกรอบ — เหลือแค่เงาอ่อนด้านซ้ายหลังข้อความเพื่อให้อ่านง่าย */
 .hero-fade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(246, 245, 241, 0) 0%, rgba(246, 245, 241, 0.4) 58%, var(--bg-page) 100%);
+  background: linear-gradient(90deg, rgba(246, 245, 241, 0.55) 0%, rgba(246, 245, 241, 0.2) 38%, rgba(246, 245, 241, 0) 58%);
 }
 
 .hero-left {
@@ -252,7 +253,7 @@ main {
   font-size: 15px;
   color: var(--ink-secondary);
   margin-top: 14px;
-  max-width: 480px;
+  max-width: 320px; /* ตัดขึ้นบรรทัดใหม่ก่อนถึงต้นไม้ในรูป */
   line-height: 1.6;
 }
 
@@ -286,10 +287,12 @@ main {
   flex-direction: column;
   gap: 1px;
   padding-left: 18px;
-  border-left: 1px solid var(--border-subtle);
+  /* รูปเต็มแล้ว ตำแหน่งนี้ทับสูทสีดำ — ใช้ตัวอักษรสีอ่อนแทนสีเทา */
+  border-left: 1px solid rgba(255, 255, 255, 0.55);
   font-size: 11px;
   letter-spacing: 2px;
-  color: var(--ink-secondary);
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
   font-weight: 500;
 }
 
