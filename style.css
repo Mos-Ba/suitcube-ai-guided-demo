@@ -185,23 +185,28 @@ header {
    Main Content Layout
    ========================================================================== */
 main {
-  max-width: 1280px;
   width: 100%;
-  margin: 0 auto;
-  padding: 36px 32px 60px;
   flex: 1;
+}
+
+/* เนื้อหาใต้ hero ล็อกความกว้างไว้เท่าเดิม (hero กว้างเต็มจอ) */
+.main-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 32px 60px;
 }
 
 /* ==========================================================================
    Hero Section
    ========================================================================== */
+/* hero ชนขอบจอซ้าย-ขวา ข้อความยังตรงแนวกับเนื้อหาด้านล่าง (container 1280 - padding 32) */
 .hero-section {
+  --hero-gutter: max(44px, calc((100% - 1280px) / 2 + 44px));
   position: relative;
   overflow: hidden;
-  border-radius: 20px;
-  min-height: 340px;
-  padding: 52px 44px 40px;
-  margin-bottom: 28px;
+  min-height: 460px;
+  padding: 72px var(--hero-gutter) 120px;
+  margin-bottom: 4px;
   display: flex;
   align-items: flex-start;
 }
@@ -219,11 +224,13 @@ main {
   object-position: 76% 20%;
 }
 
-/* รูปเต็มทั้งกรอบ — เหลือแค่เงาอ่อนด้านซ้ายหลังข้อความเพื่อให้อ่านง่าย */
+/* ขอบล่างค่อยๆ จางกลืนกับพื้นหลังหน้า + เงาอ่อนด้านซ้ายหลังข้อความให้อ่านง่าย */
 .hero-fade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgba(246, 245, 241, 0.55) 0%, rgba(246, 245, 241, 0.2) 38%, rgba(246, 245, 241, 0) 58%);
+  background:
+    linear-gradient(180deg, rgba(246, 245, 241, 0) 55%, rgba(246, 245, 241, 0.7) 82%, var(--bg-page) 100%),
+    linear-gradient(90deg, rgba(246, 245, 241, 0.55) 0%, rgba(246, 245, 241, 0.2) 38%, rgba(246, 245, 241, 0) 58%);
 }
 
 .hero-left {
@@ -261,7 +268,7 @@ main {
   position: absolute;
   z-index: 1;
   top: 28px;
-  right: 40px;
+  right: var(--hero-gutter);
   background: rgba(20, 20, 20, 0.78);
   backdrop-filter: blur(4px);
   color: #FFFFFF;
@@ -281,8 +288,8 @@ main {
 .hero-motto {
   position: absolute;
   z-index: 1;
-  right: 44px;
-  bottom: 22px;
+  right: var(--hero-gutter);
+  bottom: 130px; /* อยู่เหนือช่วงที่จางลง ไม่งั้นตัวขาวหายไปในพื้นอ่อน */
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -1445,13 +1452,13 @@ dialog a {
     display: flex;
   }
   
-  main {
-    padding: 20px 16px 40px;
+  .main-inner {
+    padding: 0 16px 40px;
   }
-  
+
   .hero-section {
     min-height: 0;
-    padding: 0;
+    padding: 20px 16px 0;
     margin-bottom: 20px;
   }
 
