@@ -328,6 +328,7 @@ function render() {
       <div class="result-layout">
         <div class="result-side">
           <section class="size-card" aria-label="ไซส์แนะนำ">
+            <span class="eyebrow eyebrow-thread">SUITCUBE · FIT LABEL</span>
             <span class="size-label">ไซส์แนะนำสำหรับคุณ</span>
             <div class="size-main">
               <span class="size-num">${sizeNum(rec.main)}</span>
@@ -349,7 +350,11 @@ function render() {
           </section>
         </div>
 
-        <section class="soft-card measure-card">
+        <section class="soft-card measure-card ticket">
+          <div class="ticket-strip">
+            <span class="eyebrow">FITTING TICKET</span>
+            <span class="ticket-meta">ออกเมื่อ ${escapeText(new Date().toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }))}</span>
+          </div>
           <div class="card-head">
             <h3>${ICON.measureTape}สัดส่วนประเมิน</h3>
             <span class="unit-pill">หน่วย: นิ้ว</span>
@@ -423,7 +428,7 @@ const LOADING_STEPS = ['กำลังตรวจสอบภาพถ่า�
 
 function loadingHTML() {
   return `<div class="loading" role="status">
-    <div class="spinner"></div>
+    <div class="tape" aria-hidden="true"><div class="tape-ticks"></div><div class="tape-tab"></div></div>
     <h2>กำลังประมวลผลขนาดของคุณ</h2>
     <p class="sub loading-status">${LOADING_STEPS[0]}</p>
     <p class="loading-hint">ใช้เวลาประมาณ 5–10 วินาที</p>
