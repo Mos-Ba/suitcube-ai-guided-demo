@@ -891,7 +891,7 @@ main {
 }
 
 .photo-preview {
-  height: 140px;
+  height: 180px;
   position: relative;
   display: grid;
   place-items: center;
@@ -902,7 +902,11 @@ main {
   overflow: hidden;
 }
 
+/* absolute ให้รูปยึดกรอบช่อง — ถ้าเป็น grid item ธรรมดา height:100% ไม่ทำงาน
+   รูปจะโชว์ขนาดจริงจนเห็นแค่หัว และดันการ์ดให้กว้างล้นขอบ */
 .photo-preview img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -920,6 +924,14 @@ main {
   font-weight: 500;
   padding: 2px 6px;
   border-radius: 4px;
+}
+
+/* ก่อนอัปโหลด: แสดงท่ายืนตัวอย่างแบบจาง ให้ต่างจากรูปที่อัปโหลดจริงชัดเจน */
+.photo-preview .photo-example {
+  padding: 10px 0;
+  background: transparent;
+  opacity: 0.55;
+  mix-blend-mode: multiply;
 }
 
 .photo-placeholder {

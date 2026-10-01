@@ -109,10 +109,8 @@ function render() {
                 <img src="${state.photos[i].url}" alt="ภาพ${a}">
                 ${state.failedPhotos.includes(photoKeys[i]) ? '<span class="retake-badge">ถ่ายใหม่</span>' : ''}
               ` : `
-                <div class="photo-placeholder">
-                  <span class="ph-icon">▣</span>
-                  <small>มุม${a}</small>
-                </div>
+                <img src="images/photo-sample-${photoKeys[i]}.jpg" alt="ตัวอย่างท่ายืนถ่ายภาพ${a}" class="photo-example">
+                <span class="sample-badge">ตัวอย่าง</span>
               `}
             </div>
             <strong>${a} ${state.photos[i] && !state.failedPhotos.includes(photoKeys[i]) ? '<span class="check-mark-text">✓</span>' : ''}</strong>
