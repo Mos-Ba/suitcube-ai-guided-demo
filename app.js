@@ -132,6 +132,58 @@ const escapeText = v => String(v).replace(/[&<>"']/g, c => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 }[c]));
 
+// สูทแนะนำท้ายหน้า — ชื่อ/รูป/ลิงก์คัดลอกจาก suitcube.com (2026-10-01) ถ้าหน้าร้านเปลี่ยนสินค้าต้องแก้ที่นี่ด้วย
+const PICKS = {
+  male: {
+    all: 'https://www.suitcube.com/ultimate-fit/',
+    line: 'ULTIMATE FIT',
+    items: [
+      ['Formal Blue', 'UF2039-1', 'm-formal-blue.webp', 'formalblue'],
+      ['Classic Black', 'UF068-BK', 'm-classic-black.webp', 'classicblack'],
+      ['Gentle Gray', 'UF068-31', 'm-gentle-gray.webp', 'ultimate-fit-gentle-gray-uf068-31'],
+      ['Camel Gray', 'UF632-7', 'm-camel-gray.webp', 'ultimate-fit-camel-gray-uf632-7']
+    ]
+  },
+  female: {
+    all: 'https://www.suitcube.com/product-category/women-suit/',
+    line: 'สูทผู้หญิง',
+    items: [
+      ['Camila Navy Berry', 'F570-620', 'w-navy-berry.jpg', 'camila-navy-berry-f570-620'],
+      ['Camila Snow White', 'F570-526', 'w-snow-white.webp', 'camila-snow-white-f570-526'],
+      ['Camila Pearl', 'F570-601', 'w-pearl.jpg', 'camila-pearl-f570-601'],
+      ['Camila Red Rose', 'F570-614', 'w-red-rose.jpg', 'camila-red-rose-f570-614-2']
+    ]
+  }
+};
+
+let picksKey = '';
+function renderPicks() {
+  const grid = document.querySelector('#picks-grid');
+  if (!grid) return;
+  const m = state.result?.measurements;
+  const size = state.step === 3 && typeof m?.chest === 'number'
+    ? String(recommendSizes(m.chest, state.gender).main || '').replace(/^sz/i, '') : '';
+  const key = `${state.gender}|${size}`;
+  if (key === picksKey) return;
+  picksKey = key;
+
+  const set = PICKS[state.gender] || PICKS.male;
+  document.querySelector('#picks-all').href = set.all;
+  document.querySelector('#picks-sub').textContent = size
+    ? `ไซส์แนะนำของคุณคือ ${size} — เลือกไซส์นี้เมื่อสั่งซื้อที่ suitcube.com`
+    : 'คัดจากคอลเลกชันที่ suitcube.com';
+  grid.innerHTML = set.items.map(([name, code, img, slug]) => `
+    <li>
+      <a class="pick-card" href="https://www.suitcube.com/product/${slug}/" target="_blank" rel="noopener">
+        <span class="pick-photo"><img src="images/products/${img}" alt="สูท ${escapeText(name)}" width="330" height="396" loading="lazy"></span>
+        <span class="pick-line">${set.line}</span>
+        <strong>${escapeText(name)}</strong>
+        <span class="pick-code">${code}</span>
+        <span class="pick-cta">ดูสินค้า →</span>
+      </a>
+    </li>`).join('');
+}
+
 async function go(n) {
   if (state.busy) return;
   const dir = n >= state.step ? 1 : -1;
@@ -387,6 +439,7 @@ function render() {
 
   surface.innerHTML = body;
   bind();
+  renderPicks();
 }
 
 function bind() {
@@ -712,6 +765,7 @@ document.addEventListener('click', e => {
       ff?.classList.toggle('open', isFemale);
       ff?.querySelectorAll('input').forEach(inp => { inp.disabled = !isFemale; });
       renderStepper(true);
+      renderPicks();
     } else {
       render();
     }
