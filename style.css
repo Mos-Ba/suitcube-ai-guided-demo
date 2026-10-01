@@ -167,22 +167,13 @@ header {
 }
 
 .mobile-menu-btn {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
+  display: grid;
+  place-items: center;
   width: 32px;
   height: 32px;
-  padding: 4px;
+  color: var(--ink-primary);
 }
 
-.mobile-menu-btn span {
-  display: block;
-  width: 20px;
-  height: 2px;
-  background: var(--ink-primary);
-  border-radius: 2px;
-}
 
 /* ==========================================================================
    Main Content Layout
@@ -1185,6 +1176,12 @@ main {
   font-weight: 600;
 }
 
+.result-stepper b .ic {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
 .result-stepper li.current span {
   color: var(--ink-primary);
   font-weight: 600;
@@ -1289,9 +1286,9 @@ main {
 
 .size-illus {
   display: block;
-  width: 180px;
-  height: 180px;
-  margin: 10px auto 0;
+  width: 162px; /* viewBox 400×520 */
+  height: 210px;
+  margin: 14px auto 2px;
   color: var(--gold-primary);
 }
 
@@ -1459,8 +1456,16 @@ main {
 }
 
 .result-actions .text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   margin: 0;
   padding: 0 6px;
+}
+
+.result-actions .text-button .ic {
+  width: 16px;
+  height: 16px;
 }
 
 .print-only {

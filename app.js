@@ -26,32 +26,23 @@ const state = {
 
 const surface = document.querySelector('#surface');
 
-// ไอคอนลายเส้น (stroke = currentColor) ใช้ในหน้าผลประเมิน
-const svg = (body, cls = 'ic') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+// ไอคอนจากชุด SUITCUBE-AI-Result-Assets (stroke = currentColor ให้สีตาม CSS ของแต่ละจุด)
+const svg = (body, cls = 'ic') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
 const ICON = {
-  user: svg('<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>'),
-  ruler: svg('<rect x="8" y="2" width="8" height="20" rx="1.5"/><path d="M8 6h3M8 10h4M8 14h3M8 18h4"/>'),
-  scale: svg('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7.5 10a6 6 0 0 1 9 0"/><path d="M12 10l1.6-1.8"/>'),
-  tape: svg('<circle cx="9" cy="12" r="6"/><circle cx="9" cy="12" r="2"/><path d="M15 12h6v4h-6M18 12v2"/>'),
-  pulse: svg('<polyline points="3 12 7 12 10 5 14 19 17 12 21 12"/>'),
-  pencil: svg('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>'),
-  info: svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.6v.1"/>'),
-  printer: svg('<path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/>'),
-  chat: svg('<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>'),
-  // ภาพลายเส้นเสื้อสูทบนการ์ดไซส์
-  jacket: `<svg class="size-illus" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M80 30 L56 40 Q46 44 44 56 L36 150 L34 168 L50 170 L54 150 L60 92"/>
-    <path d="M120 30 L144 40 Q154 44 156 56 L164 150 L166 168 L150 170 L146 150 L140 92"/>
-    <path d="M60 92 L58 176 Q78 182 98 182"/><path d="M140 92 L142 176 Q122 182 102 182"/>
-    <path d="M80 30 Q90 36 100 36 Q110 36 120 30"/>
-    <path d="M80 30 L71 58 L80 61 L100 118"/><path d="M120 30 L129 58 L120 61 L100 118"/>
-    <path d="M89 37 L100 62 L111 37"/>
-    <path d="M100 118 L99 182"/>
-    <circle cx="103" cy="132" r="2.4"/><circle cx="103" cy="154" r="2.4"/>
-    <path d="M65 141 L86 140"/><path d="M114 140 L135 141"/><path d="M117 84 L134 82"/>
-    <circle cx="44" cy="160" r="1.3"/><circle cx="44.6" cy="164.6" r="1.3"/>
-    <circle cx="156" cy="160" r="1.3"/><circle cx="155.4" cy="164.6" r="1.3"/>
-  </svg>`
+  measureTape: svg('<ellipse cx="12" cy="6" rx="8" ry="3"/><ellipse cx="12" cy="6" rx="3.5" ry="1.2"/><path d="M4 6v10c0 2 3.6 3.5 8 3.5 2.3 0 4.5-.4 6-1.2M20 6v7l-8 3v5l10-4v-6l-10 3M7 9v3m4-2v3m4-3v2m1 4v3m3-4v3"/>'),
+  person: svg('<circle cx="12" cy="7" r="4"/><path d="M4 21v-3a8 8 0 0 1 16 0v3Z"/>'),
+  ruler: svg('<rect x="8" y="2" width="8" height="20" rx="1"/><path d="M8 6h4M8 10h3M8 14h4M8 18h3"/>'),
+  scale: svg('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 7a7 7 0 0 1 10 0l-2 5H9Z M12 10l2-3"/>'),
+  waist: svg('<path d="M5 3h14l-1 6 3 12h-7l-2-8-2 8H3L6 9Z M5 6h14M8 4v3m8-3v3 M6 9h12"/>'),
+  bmi: svg('<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M5 12h3l2-5 4 10 2-5h3"/>'),
+  edit: svg('<path d="m14 5 4 4M5 15l-1 5 5-1L21 7a2.8 2.8 0 0 0-4-4Z M12 3H5a2 2 0 0 0-2 2v16h16v-7"/>'),
+  info: svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v.2"/>'),
+  print: svg('<path d="M7 8V3h10v5M7 17H3V9h18v8h-4M7 14h10v7H7Z M17 11h1"/>'),
+  chat: svg('<path d="M21 11a9 9 0 0 1-9 9 10 10 0 0 1-4-.8L3 21l1.7-5A9 9 0 1 1 21 11Z"/><circle cx="8" cy="11" r=".65" fill="currentColor" stroke="none"/><circle cx="12" cy="11" r=".65" fill="currentColor" stroke="none"/><circle cx="16" cy="11" r=".65" fill="currentColor" stroke="none"/>'),
+  restart: svg('<path d="M4 8a9 9 0 1 1-1 7M4 3v5h5"/>'),
+  check: svg('<path d="m5 12 5 5L20 6"/>'),
+  // ภาพลายเส้นเสื้อสูท (ตกแต่ง ไม่ใช่ภาพจำลองทรงของลูกค้า)
+  jacket: `<svg class="size-illus" viewBox="0 0 400 520" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m158 48-55 27-41 35L28 423l55 8 36-219-5 240q38 19 69 0l17-40 17 40q31 19 69 0l-5-240 36 219 55-8-34-313-41-35-55-27Z"/><path d="M158 48 200 68 242 48M171 54l29 190 29-190M158 48l-24 64 30 12-22 27 58 93M242 48l24 64-30 12 22 27-58 93M200 244v168M119 212l-16-137M281 212l16-137M34 392l53 8M366 392l-53 8 M114 452q45-6 69-39M286 452q-45-6-69-39"/><path d="m128 315 46 5-2 18-46-5ZM226 320l46-5 2 18-46 5ZM231 175l39-7 2 10-39 7Z"/><path d="M183 62v46M217 62v46M174 83h52" stroke-opacity=".6"/><circle cx="210" cy="275" r="4"/><circle cx="210" cy="314" r="4"/><g stroke-width="1.5"><circle cx="46" cy="407" r="2.5"/><circle cx="56" cy="409" r="2.5"/><circle cx="66" cy="411" r="2.5"/><circle cx="354" cy="407" r="2.5"/><circle cx="344" cy="409" r="2.5"/><circle cx="334" cy="411" r="2.5"/></g></svg>`
 };
 const escapeText = v => String(v).replace(/[&<>"']/g, c => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -215,18 +206,18 @@ function render() {
       ['ต้นแขน', m.upper_arm], ['ยาวแขน', m.arm_length], ['ยาวหน้า', m.front_length], ['ยาวหลัง', m.back_length]
     ];
     const info = [
-      [ICON.user, state.gender === 'male' ? 'ชาย' : 'หญิง'],
+      [ICON.person, state.gender === 'male' ? 'ชาย' : 'หญิง'],
       [ICON.ruler, `${escapeText(state.values.height)} ซม.`],
       [ICON.scale, `${escapeText(state.values.weight)} กก.`],
-      [ICON.tape, `เอวกางเกง ${escapeText(state.values.waist)} นิ้ว`],
-      ...(state.gender === 'female' && state.values.chest ? [[ICON.tape, `รอบอก ${escapeText(state.values.chest)} นิ้ว`]] : []),
-      ...(state.gender === 'female' && state.values.hip ? [[ICON.tape, `รอบสะโพก ${escapeText(state.values.hip)} นิ้ว`]] : []),
-      ...(typeof r.bmi === 'number' ? [[ICON.pulse, `BMI ${r.bmi}`]] : [])
+      [ICON.waist, `เอวกางเกง ${escapeText(state.values.waist)} นิ้ว`],
+      ...(state.gender === 'female' && state.values.chest ? [[ICON.measureTape, `รอบอก ${escapeText(state.values.chest)} นิ้ว`]] : []),
+      ...(state.gender === 'female' && state.values.hip ? [[ICON.measureTape, `รอบสะโพก ${escapeText(state.values.hip)} นิ้ว`]] : []),
+      ...(typeof r.bmi === 'number' ? [[ICON.bmi, `BMI ${r.bmi}`]] : [])
     ];
     body = `
       <ol class="result-stepper" aria-label="ขั้นตอน">
         ${labels.map((l, i) => `
-          <li class="${i < 3 ? 'done' : 'current'}"><b>${i < 3 ? '✓' : i + 1}</b><span>${i + 1}. ${l}</span></li>
+          <li class="${i < 3 ? 'done' : 'current'}"><b>${i < 3 ? ICON.check : i + 1}</b><span>${i + 1}. ${l}</span></li>
         `).join('')}
       </ol>
 
@@ -252,7 +243,7 @@ function render() {
           <section class="soft-card">
             <div class="card-head">
               <h3>ข้อมูลของคุณ</h3>
-              <button type="button" class="edit-link" data-step="0">${ICON.pencil}แก้ไขข้อมูล</button>
+              <button type="button" class="edit-link" data-step="0">${ICON.edit}แก้ไขข้อมูล</button>
             </div>
             <ul class="info-list">
               ${info.map(([icon, text]) => `<li>${icon}<span>${text}</span></li>`).join('')}
@@ -262,7 +253,7 @@ function render() {
 
         <section class="soft-card measure-card">
           <div class="card-head">
-            <h3>${ICON.tape}สัดส่วนประเมิน</h3>
+            <h3>${ICON.measureTape}สัดส่วนประเมิน</h3>
             <span class="unit-pill">หน่วย: นิ้ว</span>
           </div>
           <div class="measure-grid">
@@ -276,9 +267,9 @@ function render() {
           ` : ''}
           <p class="result-note">${ICON.info}ไซส์แนะนำเบื้องต้น ทีมงานจะตรวจสอบอีกครั้งก่อนยืนยันการสั่งตัด</p>
           <div class="result-actions">
-            <button type="button" class="primary" id="print">${ICON.printer}บันทึกผล / พิมพ์</button>
+            <button type="button" class="primary" id="print">${ICON.print}บันทึกผล / พิมพ์</button>
             <button type="button" class="secondary" data-help="stylist">${ICON.chat}ปรึกษาเรา</button>
-            <button type="button" class="text-button" id="reset">เริ่มใหม่</button>
+            <button type="button" class="text-button" id="reset">${ICON.restart}เริ่มใหม่</button>
           </div>
         </section>
       </div>
