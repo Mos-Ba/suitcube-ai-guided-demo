@@ -25,6 +25,34 @@ const state = {
 };
 
 const surface = document.querySelector('#surface');
+
+// ไอคอนลายเส้น (stroke = currentColor) ใช้ในหน้าผลประเมิน
+const svg = (body, cls = 'ic') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+const ICON = {
+  user: svg('<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>'),
+  ruler: svg('<rect x="8" y="2" width="8" height="20" rx="1.5"/><path d="M8 6h3M8 10h4M8 14h3M8 18h4"/>'),
+  scale: svg('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7.5 10a6 6 0 0 1 9 0"/><path d="M12 10l1.6-1.8"/>'),
+  tape: svg('<circle cx="9" cy="12" r="6"/><circle cx="9" cy="12" r="2"/><path d="M15 12h6v4h-6M18 12v2"/>'),
+  pulse: svg('<polyline points="3 12 7 12 10 5 14 19 17 12 21 12"/>'),
+  pencil: svg('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>'),
+  info: svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.6v.1"/>'),
+  printer: svg('<path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/>'),
+  chat: svg('<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>'),
+  // ภาพลายเส้นเสื้อสูทบนการ์ดไซส์
+  jacket: `<svg class="size-illus" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M80 30 L56 40 Q46 44 44 56 L36 150 L34 168 L50 170 L54 150 L60 92"/>
+    <path d="M120 30 L144 40 Q154 44 156 56 L164 150 L166 168 L150 170 L146 150 L140 92"/>
+    <path d="M60 92 L58 176 Q78 182 98 182"/><path d="M140 92 L142 176 Q122 182 102 182"/>
+    <path d="M80 30 Q90 36 100 36 Q110 36 120 30"/>
+    <path d="M80 30 L71 58 L80 61 L100 118"/><path d="M120 30 L129 58 L120 61 L100 118"/>
+    <path d="M89 37 L100 62 L111 37"/>
+    <path d="M100 118 L99 182"/>
+    <circle cx="103" cy="132" r="2.4"/><circle cx="103" cy="154" r="2.4"/>
+    <path d="M65 141 L86 140"/><path d="M114 140 L135 141"/><path d="M117 84 L134 82"/>
+    <circle cx="44" cy="160" r="1.3"/><circle cx="44.6" cy="164.6" r="1.3"/>
+    <circle cx="156" cy="160" r="1.3"/><circle cx="155.4" cy="164.6" r="1.3"/>
+  </svg>`
+};
 const escapeText = v => String(v).replace(/[&<>"']/g, c => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 }[c]));
@@ -53,8 +81,9 @@ function field(key, title, unit, min, max) {
 }
 
 function render() {
-  // 0. Show the preparation guide panel only on step 1
+  // 0. Show the preparation guide panel only on step 1; result page uses the full card width
   document.querySelector('#workspace-body')?.classList.toggle('no-guide', state.step !== 0);
+  document.querySelector('#workspace-body')?.classList.toggle('result-mode', state.step === 3);
 
   // 1. Render Desktop Stepper
   const stepsEl = document.querySelector('#steps');
@@ -174,42 +203,70 @@ function render() {
   } else {
     const r = state.result || {};
     const m = r.measurements || {};
-    const wc = r.waist_conversion || {};
     const fmt = n => (typeof n === 'number' ? n.toFixed(2) : '–');
-    const alts = (r.jacket_size_alternatives || []).map(escapeText).join(', ');
+    // API ส่ง "sz46" — หน้าผลแสดงแค่ตัวเลขตามแบบ
+    const sizeNum = s => escapeText(String(s || '–').replace(/^sz/i, ''));
+    const alts = (r.jacket_size_alternatives || []).map(sizeNum).join(', ');
+    const lengthName = { S: 'Short', R: 'Regular', L: 'Long' }[r.jacket_length] || '';
     const warnings = r.warnings || [];
     const confirmWaist = r.action_required === 'CONFIRM_WAIST';
+    const measures = [
+      ['ไหล่', m.shoulder], ['อก', m.chest], ['เอว', m.waist], ['สะโพก', m.hip],
+      ['ต้นแขน', m.upper_arm], ['ยาวแขน', m.arm_length], ['ยาวหน้า', m.front_length], ['ยาวหลัง', m.back_length]
+    ];
+    const info = [
+      [ICON.user, state.gender === 'male' ? 'ชาย' : 'หญิง'],
+      [ICON.ruler, `${escapeText(state.values.height)} ซม.`],
+      [ICON.scale, `${escapeText(state.values.weight)} กก.`],
+      [ICON.tape, `เอวกางเกง ${escapeText(state.values.waist)} นิ้ว`],
+      ...(state.gender === 'female' && state.values.chest ? [[ICON.tape, `รอบอก ${escapeText(state.values.chest)} นิ้ว`]] : []),
+      ...(state.gender === 'female' && state.values.hip ? [[ICON.tape, `รอบสะโพก ${escapeText(state.values.hip)} นิ้ว`]] : []),
+      ...(typeof r.bmi === 'number' ? [[ICON.pulse, `BMI ${r.bmi}`]] : [])
+    ];
     body = `
-      <div class="success-mark">✓</div>
-      <h2 tabindex="-1">ผลประเมินขนาดของคุณ</h2>
-      <p class="sub">ประเมินจากข้อมูลสัดส่วนและภาพถ่ายทั้ง 4 มุมด้วยระบบ AI</p>
+      <ol class="result-stepper" aria-label="ขั้นตอน">
+        ${labels.map((l, i) => `
+          <li class="${i < 3 ? 'done' : 'current'}"><b>${i < 3 ? '✓' : i + 1}</b><span>${i + 1}. ${l}</span></li>
+        `).join('')}
+      </ol>
 
-      <div class="result-card">
-        <div class="result-letterhead">
-          <img src="images/suitcube-wordmark.png" alt="SUITCUBE" class="result-logo-img">
+      <img src="images/suitcube-ai-logo.png" alt="SUITCUBE AI" class="print-only print-logo">
+      <div class="result-title">
+        <h2 tabindex="-1">ผลประเมินขนาดของคุณ</h2>
+        <p class="sub">สรุปไซส์แนะนำและสัดส่วนเบื้องต้นของคุณ</p>
+      </div>
+
+      <div class="result-layout">
+        <div class="result-side">
+          <section class="size-card" aria-label="ไซส์แนะนำ">
+            <span class="size-label">ไซส์แนะนำสำหรับคุณ</span>
+            <div class="size-main">
+              <span class="size-num">${sizeNum(r.jacket_size)}</span>
+              <span class="size-len"><b>${escapeText(r.jacket_length || '')}</b>${lengthName ? `<small>${lengthName}</small>` : ''}</span>
+              <span class="result-badge">แนะนำ</span>
+            </div>
+            ${alts ? `<div class="size-alt">ไซส์ทางเลือก <b>${alts}</b></div>` : ''}
+            ${ICON.jacket}
+          </section>
+
+          <section class="soft-card">
+            <div class="card-head">
+              <h3>ข้อมูลของคุณ</h3>
+              <button type="button" class="edit-link" data-step="0">${ICON.pencil}แก้ไขข้อมูล</button>
+            </div>
+            <ul class="info-list">
+              ${info.map(([icon, text]) => `<li>${icon}<span>${text}</span></li>`).join('')}
+            </ul>
+          </section>
         </div>
-        <div class="result-header">
-          <div class="result-header-text">
-            <small>ไซส์แนะนำสำหรับคุณ</small>
-            <div class="result-size-big">${escapeText(r.jacket_size || '–')} <span class="result-length">(${escapeText(r.jacket_length || '–')})</span></div>
-            ${alts ? `<small class="result-alt">ทางเลือก: ${alts}</small>` : ''}
+
+        <section class="soft-card measure-card">
+          <div class="card-head">
+            <h3>${ICON.tape}สัดส่วนประเมิน</h3>
+            <span class="unit-pill">หน่วย: นิ้ว</span>
           </div>
-          <span class="result-badge">แนะนำ</span>
-        </div>
-        <div class="result-body">
-          <p class="result-profile-line">
-            ${state.gender === 'male' ? 'ชาย' : 'หญิง'} · ${escapeText(state.values.weight)} กก. · ${escapeText(state.values.height)} ซม. ·
-            เอวกางเกง ${escapeText(state.values.waist)}"${typeof wc.suit_waist === 'number' ? ` · เอวสูท ${fmt(wc.suit_waist)}"` : ''}${typeof r.bmi === 'number' ? ` · BMI ${r.bmi}` : ''}
-          </p>
           <div class="measure-grid">
-            <div class="measure-item"><span>ไหล่</span><strong>${fmt(m.shoulder)}<small>"</small></strong></div>
-            <div class="measure-item"><span>อก</span><strong>${fmt(m.chest)}<small>"</small></strong></div>
-            <div class="measure-item"><span>เอว</span><strong>${fmt(m.waist)}<small>"</small></strong></div>
-            <div class="measure-item"><span>สะโพก</span><strong>${fmt(m.hip)}<small>"</small></strong></div>
-            <div class="measure-item"><span>ต้นแขน</span><strong>${fmt(m.upper_arm)}<small>"</small></strong></div>
-            <div class="measure-item"><span>ยาวแขน</span><strong>${fmt(m.arm_length)}<small>"</small></strong></div>
-            <div class="measure-item"><span>ยาวหน้า</span><strong>${fmt(m.front_length)}<small>"</small></strong></div>
-            <div class="measure-item"><span>ยาวหลัง</span><strong>${fmt(m.back_length)}<small>"</small></strong></div>
+            ${measures.map(([label, v]) => `<div class="measure-item"><span>${label}</span><strong>${fmt(v)}″</strong></div>`).join('')}
           </div>
           ${confirmWaist ? `<p class="result-alert">รอบเอวที่กรอกดูไม่สอดคล้องกับน้ำหนักและส่วนสูง กรุณาตรวจสอบรอบเอวกางเกงอีกครั้ง หรือให้ทีมงานยืนยันก่อนสั่งตัด</p>` : ''}
           ${warnings.length ? `
@@ -217,15 +274,14 @@ function render() {
               ${warnings.map(w => `<li>${escapeText(w)}</li>`).join('')}
             </ul>
           ` : ''}
-          <p class="result-warning">ผลนี้เป็นขนาดแนะนำเบื้องต้น ทีมงาน SUITCUBE จะตรวจสอบอีกครั้งก่อนยืนยันการสั่งตัด</p>
-        </div>
+          <p class="result-note">${ICON.info}ไซส์แนะนำเบื้องต้น ทีมงานจะตรวจสอบอีกครั้งก่อนยืนยันการสั่งตัด</p>
+          <div class="result-actions">
+            <button type="button" class="primary" id="print">${ICON.printer}บันทึกผล / พิมพ์</button>
+            <button type="button" class="secondary" data-help="stylist">${ICON.chat}ปรึกษาเรา</button>
+            <button type="button" class="text-button" id="reset">เริ่มใหม่</button>
+          </div>
+        </section>
       </div>
-
-      <div class="actions">
-        <button type="button" class="secondary" data-step="2">แก้ไขข้อมูล</button>
-        <button type="button" class="primary" id="print">พิมพ์ / บันทึกผล</button>
-      </div>
-      <button type="button" class="text-button" id="reset">เริ่มใหม่ทั้งหมด ↗</button>
     `;
   }
 
