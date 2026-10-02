@@ -2383,9 +2383,8 @@ header {
 /* ── หน้าผล ── */
 /* การ์ดไซส์ = ป้ายทอติดเสื้อ: navy ขอบด้ายทองเย็บโดยรอบ */
 .size-card {
+  position: relative;
   background: var(--navy);
-  outline: 1px dashed var(--thread);
-  outline-offset: -10px;
   padding: 26px 28px 20px;
   print-color-adjust: exact;
   -webkit-print-color-adjust: exact;
@@ -3027,3 +3026,128 @@ dialog .secondary.danger:hover { background: var(--danger-bg); border-color: var
   font-size: 16px;
 }
 .result-actions .shop-btn span { opacity: .75; }
+
+/* ==========================================================================
+   Motion รอบ 2 — จุดที่เคย "โผล่ทันที" ให้มีจังหวะ · ทุกข้อปิดเองเมื่อ prefers-reduced-motion
+   ========================================================================== */
+
+/* ── 1) หน้าผล: รอยเย็บเดินรอบป้ายผ้า (SVG แทน outline เพื่อให้ "เดินเส้น" ได้) ── */
+.stitch {
+  position: absolute;
+  inset: 10px;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  overflow: visible;
+  pointer-events: none;
+}
+.stitch rect {
+  x: .5px;
+  y: .5px;
+  width: calc(100% - 1px);
+  height: calc(100% - 1px);
+}
+.stitch-line { stroke: var(--thread); stroke-width: 1; }
+.stitch-pen { stroke-dashoffset: 0; }
+.size-card > :not(.stitch) { position: relative; } /* เนื้อหาอยู่เหนือเส้น */
+
+@keyframes stitch-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.result-layout.reveal .stitch-pen {
+  animation: stitch-draw 1400ms cubic-bezier(.3, .1, .2, 1) 260ms both;
+}
+
+/* ตัวเลขสัดส่วนในตั๋วไล่ขึ้นทีละช่อง หลังตั๋วลอยขึ้นมาแล้ว */
+@keyframes settle {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+.result-layout.reveal .measure-item {
+  animation: settle 420ms var(--ease-out) both;
+  animation-delay: calc(520ms + var(--m, 0) * 60ms);
+}
+.result-layout.reveal .size-alt,
+.result-layout.reveal .size-illus {
+  animation: settle 500ms var(--ease-out) 1100ms both;
+}
+
+/* ── 3) error ใต้ช่องกรอก: กางออก/พับเก็บ ── */
+.field-error {
+  display: grid;
+  grid-template-rows: 0fr;
+  margin: 0;
+  opacity: 0;
+  transition: grid-template-rows var(--dur-base) var(--ease-out), margin-top var(--dur-base) var(--ease-out), opacity 200ms ease;
+}
+.field-error.show {
+  grid-template-rows: 1fr;
+  margin-top: 6px;
+  opacity: 1;
+}
+.field-error > span {
+  min-height: 0;
+  overflow: hidden;
+}
+.field-error::before { content: none; }
+.field-error > span:not(:empty)::before {
+  content: '!';
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: 1px;
+}
+
+/* ── 5) การ์ดสูทแนะนำ: ลอยขึ้นทีละใบเมื่อเลื่อนมาถึง ── */
+.picks-grid.pre > li { opacity: 0; }
+.picks-grid.in > li {
+  animation: settle 520ms var(--ease-out) both;
+  animation-delay: calc(var(--n, 0) * 80ms);
+}
+
+/* ── 6) หน้าโหลด: สายวัดม้วนเก็บเข้าตลับ (ตลับอยู่ซ้าย) ── */
+.tape { transform-origin: left center; }
+.loading.done .tape-ticks,
+.loading.done .tape-tab { animation-play-state: paused; }
+
+/* ── 7) นำรูปออก: รูปตัวอย่างจางกลับเข้ามา ── */
+.photo-card.just-removed .photo-example,
+.photo-card.just-removed .sample-badge {
+  animation: fade-in 320ms var(--ease-out) both;
+}
+
+/* ── 8) เส้นเชื่อมขั้นตอน: ด้ายทองเดินตามขั้นที่ผ่าน ── */
+.step.complete:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 17px;
+  top: 42px;
+  height: 28px;
+  width: 0;
+  z-index: 1;
+  border-left: 2px dashed var(--gold-primary);
+}
+@keyframes thread-down { from { clip-path: inset(0 -2px 100% -2px); } to { clip-path: inset(0 -2px 0 -2px); } }
+.step.just-done:not(:last-child)::before {
+  animation: thread-down 420ms var(--ease-out) 120ms both;
+}
+
+.mob-line { position: relative; }
+.mob-line::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -2px;
+  border-top: 2px dashed var(--gold-primary);
+  clip-path: inset(-2px 100% -2px 0);
+  transition: clip-path 420ms var(--ease-out);
+}
+.mob-line.done::after { clip-path: inset(-2px 0 -2px 0); }
+
+/* ปุ่มส่ง: เหตุผลที่ยังกดไม่ได้ จางเข้า-ออก */
+.submit-hint { transition: opacity 200ms ease; }

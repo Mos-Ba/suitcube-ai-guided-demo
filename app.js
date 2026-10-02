@@ -54,6 +54,8 @@ const state = {
   photos: [null, null, null, null], // { url, file }
   failedPhotos: [],
   consent: false,
+  reveal: false,       // ผลเพิ่งมาถึง → หน้าผลเล่นจังหวะเปิดเผยหนึ่งครั้ง
+  justRemoved: null,   // index รูปที่เพิ่งนำออก — รูปตัวอย่างจางกลับเข้ามา
   consentReset: false, // เคยยินยอมแล้วแต่ข้อมูลเปลี่ยน → ขอยินยอมใหม่พร้อมบอกเหตุผล
   result: null,
   busy: false,
@@ -104,6 +106,16 @@ async function transition(renderFn, dir = 1) {
     }
   }
   return true;
+}
+
+// เล่น animation สั้นๆ แล้วรอจนจบ — แข่งกับ timer กันค้างเมื่อแท็บถูกซ่อน · ข้ามเมื่อผู้ใช้ตั้งลดการเคลื่อนไหว
+function play(el, keyframes, options) {
+  if (!el || reduceMotion()) return Promise.resolve();
+  const anim = el.animate(keyframes, options);
+  return Promise.race([
+    anim.finished.catch(() => {}),
+    new Promise(ok => setTimeout(ok, (options.duration || 0) + (options.delay || 0) + 250))
+  ]);
 }
 
 // เลื่อนให้เห็นหัวการ์ดเมื่อผู้ใช้เลื่อนลงมาไกลแล้ว (ถ้ายังอยู่ด้านบน ปล่อย hero ไว้ตามเดิม)
@@ -182,10 +194,11 @@ function renderPicks() {
 
   const set = PICKS[state.gender] || PICKS.male;
   const site = 'https://www.suitcube.com/';
-  document.querySelector('#picks-all').href = shopUrl();
-  document.querySelector('#picks-sub').textContent = size ? t('picksSubSize', { size }) : t('picksSub');
-  grid.innerHTML = set.items.map(([name, code, img, slug]) => `
-    <li>
+  const paint = () => {
+    document.querySelector('#picks-all').href = shopUrl();
+    document.querySelector('#picks-sub').textContent = size ? t('picksSubSize', { size }) : t('picksSub');
+    grid.innerHTML = set.items.map(([name, code, img, slug], n) => `
+    <li style="--n:${n}">
       <a class="pick-card" href="${site}${SITE_PREFIX[LANG]}product/${slug}/" target="_blank" rel="noopener">
         <span class="pick-photo"><img src="images/products/${img}" alt="${escapeText(t('pickAlt', { name }))}" width="330" height="396" loading="lazy"></span>
         <span class="pick-line">${escapeText(set.line())}</span>
@@ -194,7 +207,30 @@ function renderPicks() {
         <span class="pick-cta">${t('pickCta')}</span>
       </a>
     </li>`).join('');
+  };
+
+  // ครั้งแรก: วาดเลย แล้วรอให้เลื่อนมาถึงค่อยลอยขึ้น · ครั้งถัดไป (เปลี่ยนเพศ/ภาษา/ไซส์): จางออก → เปลี่ยน → จางเข้า
+  if (!grid.children.length) {
+    paint();
+    if ('IntersectionObserver' in window && !reduceMotion()) {
+      grid.classList.add('pre');
+      new IntersectionObserver((entries, io) => {
+        if (!entries.some(en => en.isIntersecting)) return;
+        grid.classList.replace('pre', 'in');
+        io.disconnect();
+      }, { threshold: 0.15 }).observe(grid);
+    }
+    return;
+  }
+  const token = ++picksToken;
+  play(grid, [{ opacity: 1 }, { opacity: 0 }], { duration: 140, easing: 'ease-in', fill: 'forwards' }).then(() => {
+    if (token !== picksToken) return;
+    paint();
+    grid.getAnimations().forEach(x => x.cancel());
+    play(grid, [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: EASE_OUT });
+  });
 }
+let picksToken = 0;
 
 async function go(n) {
   if (state.busy) return;
@@ -230,7 +266,7 @@ function field(key, disabled = false) {
         ${isWaist ? `<button type="button" class="inline-help-btn" data-help="waist" aria-label="${t('waistHelpLabel')}">?</button>` : ''}
       </div>
       ${isWaist ? `<p class="hint" id="waist-hint">${t('waistHint')}</p>` : ''}
-      <p class="field-error" id="${key}-error" hidden></p>
+      <p class="field-error" id="${key}-error"><span></span></p>
     </div>
   `;
 }
@@ -257,7 +293,14 @@ function validateField(input) {
   const el = document.querySelector(`#${input.name}-error`);
   input.setAttribute('aria-invalid', msg ? 'true' : 'false');
   input.closest('.input-wrap')?.classList.toggle('invalid', !!msg);
-  if (el) { el.textContent = msg; el.hidden = !msg; }
+  if (el) {
+    const text = el.firstElementChild;
+    clearTimeout(el._clear);
+    if (msg) text.textContent = msg;
+    // พับเก็บก่อน แล้วค่อยล้างข้อความ ไม่งั้นกล่องยุบทันทีเพราะไม่มีเนื้อหา
+    else el._clear = setTimeout(() => { text.textContent = ''; }, 260);
+    el.classList.toggle('show', !!msg);
+  }
   return !msg;
 }
 
@@ -270,6 +313,7 @@ function announce(text) {
 }
 
 let stepperKey = '';
+let stepperPrev = 0; // ขั้นก่อนหน้า — ใช้รู้ว่าเส้นช่วงไหนเพิ่ง "ผ่าน" ให้เล่นเติมสีเฉพาะช่วงนั้น
 // วาด stepper ใหม่เฉพาะตอนขั้น/สิทธิ์เปลี่ยน — ไม่งั้นแอนิเมชันจุด active จะเล่นซ้ำทุกครั้งที่อัปโหลดรูป
 function renderStepper(force = false) {
   const key = `${state.step}|${state.max}|${state.busy}`;
@@ -279,12 +323,15 @@ function renderStepper(force = false) {
   const stepsEl = document.querySelector('#steps');
   if (stepsEl) {
     stepsEl.innerHTML = labels.map((l, i) => `
-      <button class="step ${i === state.step ? 'active' : i < state.step ? 'complete' : ''}" ${i > state.max || state.busy ? 'disabled' : ''} data-step="${i}" ${i === state.step ? 'aria-current="step"':''}>
+      <button class="step ${i === state.step ? 'active' : i < state.step ? 'complete' : ''} ${i >= stepperPrev && i < state.step ? 'just-done' : ''}" ${i > state.max || state.busy ? 'disabled' : ''} data-step="${i}" ${i === state.step ? 'aria-current="step"':''}>
         <b>${i < state.step ? ICON.check : i + 1}</b>
         <span>${l}</span>
       </button>
     `).join('');
   }
+
+  stepperPrev = state.step;
+  document.querySelectorAll('.mob-line').forEach((line, idx) => line.classList.toggle('done', idx < state.step));
 
   const mobLabel = document.querySelector('#mobile-step-label');
   if (mobLabel) mobLabel.textContent = t('stepOf', { n: state.step + 1 });
@@ -340,7 +387,7 @@ function render() {
       <p class="sub">${t('s1Sub')}</p>
       <div class="photos">
         ${angles.map((a, i) => `
-          <div class="photo-card ${state.failedPhotos.includes(photoKeys[i]) ? 'photo-failed' : ''} ${state.justAdded === i ? 'just-added' : ''}">
+          <div class="photo-card ${state.failedPhotos.includes(photoKeys[i]) ? 'photo-failed' : ''} ${state.justAdded === i ? 'just-added' : ''} ${state.justRemoved === i ? 'just-removed' : ''}">
             <div class="photo-preview ${state.photos[i] ? 'has-image' : ''}">
               ${state.photos[i] ? `
                 <img src="${state.photos[i].url}" alt="${t('photoAlt', { angle: a })}">
@@ -448,9 +495,13 @@ function render() {
       </div>
       ${r.preview ? `<p class="preview-banner">${t('previewBanner')}</p>` : ''}
 
-      <div class="result-layout">
+      <div class="result-layout ${state.reveal ? 'reveal' : ''}">
         <div class="result-side">
           <section class="size-card" aria-label="${t('sizeCardLabel')}">
+            <svg class="stitch" aria-hidden="true">
+              <mask id="stitch-mask"><rect class="stitch-pen" width="100%" height="100%" rx="9" fill="none" stroke="#fff" stroke-width="5" pathLength="1" stroke-dasharray="1"/></mask>
+              <rect class="stitch-line" width="100%" height="100%" rx="9" fill="none" stroke-dasharray="4 3" mask="url(#stitch-mask)"/>
+            </svg>
             <span class="eyebrow eyebrow-thread">SUITCUBE · FIT LABEL</span>
             <span class="size-label">${t('sizeLabel')}</span>
             <div class="size-main">
@@ -483,7 +534,7 @@ function render() {
             <span class="unit-pill">${t('unitPill')}</span>
           </div>
           <div class="measure-grid">
-            ${measures.map(([label, v]) => `<div class="measure-item"><span>${label}</span><strong>${fmt(v)}</strong></div>`).join('')}
+            ${measures.map(([label, v]) => `<div class="measure-item" style="--m:${measures.findIndex(x => x[0] === label)}"><span>${label}</span><strong>${fmt(v)}</strong></div>`).join('')}
           </div>
           ${confirmWaist ? `<p class="result-alert">${t('confirmWaist')}</p>` : ''}
           ${warnings.length ? `
@@ -506,6 +557,24 @@ function render() {
   surface.innerHTML = body;
   bind();
   renderPicks();
+  if (state.reveal) { state.reveal = false; countUp(surface.querySelector('.size-num')); }
+}
+
+// ตัวเลขไซส์นับขึ้นจนถึงค่าจริง (เฉพาะตอนผลเพิ่งมาถึง) — ค่าใน DOM เป็นค่าจริงเสมอเมื่อจบหรือเมื่อปิดการเคลื่อนไหว
+function countUp(el) {
+  const target = Number(el?.textContent);
+  if (!el || !Number.isFinite(target) || reduceMotion()) return;
+  const from = Math.max(0, target - 12), delay = 320, dur = 900;
+  const t0 = performance.now();
+  el.textContent = from;
+  const tick = now => {
+    if (!el.isConnected) return;
+    const p = Math.min(1, Math.max(0, (now - t0 - delay) / dur));
+    el.textContent = Math.round(from + (target - from) * (1 - (1 - p) ** 3));
+    if (p < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+  setTimeout(() => { if (el.isConnected) el.textContent = target; }, delay + dur + 400); // แท็บถูกซ่อน rAF ไม่เดิน
 }
 
 function bind() {
@@ -576,6 +645,17 @@ function error(t) {
   if (el) el.textContent = t;
 }
 
+// ผลมาแล้ว: สายวัดม้วนเก็บเข้าตลับ ข้อความจางออก แล้วค่อยเปลี่ยนเป็นหน้าผล (แทนการตัดฉาก)
+async function retractTape() {
+  const box = surface.querySelector('.loading');
+  if (!box) return;
+  box.classList.add('done');
+  await Promise.all([
+    play(box.querySelector('.tape'), [{ transform: 'scaleX(1)' }, { transform: 'scaleX(0)' }], { duration: 340, easing: 'cubic-bezier(.5, 0, .75, 0)', fill: 'forwards' }),
+    ...[...box.querySelectorAll('h2, p')].map(el => play(el, [{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: 'ease-in', fill: 'forwards' }))
+  ]);
+}
+
 function loadingHTML() {
   return `<div class="loading" role="status">
     <div class="tape" aria-hidden="true"><div class="tape-ticks"></div><div class="tape-tab"></div></div>
@@ -622,9 +702,11 @@ async function submitPrediction() {
 
   if (PREVIEW_MODE) {
     await new Promise(r => setTimeout(r, reduceMotion() ? 600 : 2600));
+    await retractTape();
     state.busy = false;
     state.result = previewResult();
     state.failedPhotos = [];
+    state.reveal = true;
     go(3);
     return;
   }
@@ -648,11 +730,13 @@ async function submitPrediction() {
       ? t('errTimeout')
       : navigator.onLine === false ? t('errOffline') : t('errConnect'));
   }
+  if (res.ok && body?.success) await retractTape();
   state.busy = false;
 
   if (res.ok && body?.success) {
     state.result = body;
     state.failedPhotos = [];
+    state.reveal = true;
     go(3);
     return;
   }
@@ -794,7 +878,7 @@ function showHelp(key) {
 }
 
 // Global Event Listeners
-document.addEventListener('click', e => {
+document.addEventListener('click', async e => {
   // Desktop Stepper Click
   const step = e.target.closest('[data-step]');
   if (step && !step.disabled) {
@@ -835,14 +919,19 @@ document.addEventListener('click', e => {
 
   // Photo Removal
   const remove = e.target.closest('[data-remove]');
-  if (remove) {
+  if (remove && !remove.disabled) {
     const i = Number(remove.dataset.remove);
+    remove.disabled = true; // กันกดซ้ำระหว่างรูปกำลังจางออก
+    await play(remove.closest('.photo-card')?.querySelector('.photo-preview img'),
+      [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(.96)' }], { duration: 170, easing: 'ease-in', fill: 'forwards' });
     if (state.photos[i]?.url) URL.revokeObjectURL(state.photos[i].url);
     state.photos[i] = null;
     state.result = null;
     state.max = 1;
     dataChanged();
+    state.justRemoved = i;
     render();
+    state.justRemoved = null;
     announce(t('liveRemoved', { angle: angles[i] }));
     document.querySelector(`#photo${i}`)?.focus(); // ปุ่มที่กดหายไปแล้ว — คืนโฟกัสไว้ที่ช่องเลือกภาพของมุมเดิม
   }
@@ -920,8 +1009,18 @@ if (heroImg) {
 }
 
 // สลับภาษา: ค่าที่กรอกและภาพที่เลือกอยู่ใน state จึงไม่หาย — วาดข้อความใหม่ทั้งหน้า
-function setLang(lang) {
+let langToken = 0;
+async function setLang(lang) {
   if (!LANGS.includes(lang) || lang === LANG) return;
+  // เนื้อหาทั้งหน้าจางออกก่อนเปลี่ยนข้อความ (แถบบนคงไว้ ให้ปุ่มภาษาไม่กะพริบใต้นิ้ว)
+  const token = ++langToken;
+  const page = document.querySelector('main');
+  await play(page, [{ opacity: 1 }, { opacity: 0 }], { duration: 130, easing: 'ease-in', fill: 'forwards' });
+  if (token !== langToken) return;
+  const fadeIn = () => {
+    page.getAnimations().forEach(x => x.cancel());
+    play(page, [{ opacity: 0 }, { opacity: 1 }], { duration: 240, easing: EASE_OUT });
+  };
   LANG = lang;
   try { localStorage.setItem(LANG_STORE, lang); } catch { /* โหมดส่วนตัว */ }
   labels = t('steps');
@@ -936,10 +1035,12 @@ function setLang(lang) {
     renderPicks();
     const status = surface.querySelector('.loading');
     if (status) { clearInterval(state.loadingTimer); surface.innerHTML = loadingHTML(); startLoadingTicker(); }
+    fadeIn();
     return;
   }
   state.errorMsg = '';
   render();
+  fadeIn();
 }
 
 // เมนูเลือกภาษา (listbox): คลิก/แตะ · ลูกศรขึ้นลง · Enter เลือก · Esc หรือคลิกข้างนอกเพื่อปิด
@@ -956,15 +1057,26 @@ function syncLangUI() {
 }
 
 function toggleLangMenu(open, focusBtn = true) {
-  if (!langMenu || langMenu.hidden === !open) return;
-  langMenu.hidden = !open;
+  if (!langMenu || (langBtn.getAttribute('aria-expanded') === 'true') === open) return;
   langBtn.setAttribute('aria-expanded', open);
-  if (open) (langOpts.find(o => o.dataset.lang === LANG) || langOpts[0]).focus();
-  else if (focusBtn) langBtn.focus();
+  langMenu.getAnimations().forEach(x => x.cancel());
+  if (open) {
+    langMenu.hidden = false;
+    (langOpts.find(o => o.dataset.lang === LANG) || langOpts[0]).focus();
+    return;
+  }
+  if (focusBtn) langBtn.focus();
+  // ปิด: ยุบกลับขึ้นไปหาปุ่ม (ย้อนของตอนเปิด) แล้วค่อยซ่อน
+  play(langMenu, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-6px) scale(.97)' }], { duration: 120, easing: 'ease-in', fill: 'forwards' })
+    .then(() => {
+      if (langBtn.getAttribute('aria-expanded') === 'true') return; // ถูกเปิดใหม่ระหว่างกำลังปิด
+      langMenu.hidden = true;
+      langMenu.getAnimations().forEach(x => x.cancel());
+    });
 }
 
 if (langBtn && langMenu) {
-  langBtn.addEventListener('click', () => toggleLangMenu(langMenu.hidden));
+  langBtn.addEventListener('click', () => toggleLangMenu(langBtn.getAttribute('aria-expanded') !== 'true'));
   langBtn.addEventListener('keydown', e => {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); toggleLangMenu(true); }
   });
@@ -986,7 +1098,7 @@ if (langBtn && langMenu) {
   });
   // คลิก/แตะนอกเมนู = ปิด (ไม่ดึงโฟกัสกลับ ปล่อยให้ไปตามที่ผู้ใช้กด)
   document.addEventListener('pointerdown', e => {
-    if (!langMenu.hidden && !e.target.closest('#lang-switch')) toggleLangMenu(false, false);
+    if (!e.target.closest('#lang-switch')) toggleLangMenu(false, false);
   });
 }
 syncLangUI();
