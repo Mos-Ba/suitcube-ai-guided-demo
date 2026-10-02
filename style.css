@@ -2964,3 +2964,57 @@ html {
 
 /* หน่วย (เช่น 英寸) ห้ามตัดบรรทัดกลางคำ */
 .unit-tag { white-space: nowrap; flex-shrink: 0; }
+
+/* ── Clarify: เหตุผลที่ปุ่มส่งยังกดไม่ได้ · ช่องทางติดต่อ · ปุ่มลบข้อมูล ── */
+.submit-hint {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--ink-muted);
+  text-align: right;
+}
+
+.contact-list {
+  list-style: none;
+  margin: 14px 0 0;
+  border-top: 1px dashed var(--stitch);
+}
+.contact-list li { border-bottom: 1px dashed var(--stitch); }
+.contact-list a {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--ink-primary);
+}
+.contact-list a:hover { color: var(--gold-dark); }
+
+dialog .secondary.danger {
+  width: 100%;
+  margin-top: 16px;
+  color: var(--danger-ink);
+  border-color: var(--danger-line);
+}
+dialog .secondary.danger:hover { background: var(--danger-bg); border-color: var(--danger); }
+
+/* ── Harden: ป้ายภาษาอังกฤษ/จีนยาวกว่าไทย + จอแคบ 320px ── */
+/* ลูกของ grid/flex ต้องยอมหดได้ ไม่งั้นการ์ดไซส์ดันกว้างเกินจอ (เนื้อหาถูกตัดขอบขวา) */
+.result-layout > *,
+.result-side > * { min-width: 0; }
+.size-main { flex-wrap: wrap; row-gap: 10px; }
+.card-head { flex-wrap: wrap; gap: 6px 12px; }
+.info-list li { min-width: 0; }
+.info-list li span { min-width: 0; overflow-wrap: anywhere; }
+.submit-hint { overflow-wrap: anywhere; }
+
+@media (max-width: 400px) {
+  /* ข้อมูลของคุณ: คอลัมน์เดียว ป้ายยาวอย่าง "Trouser waist 30 in" ไม่ถูกบีบ */
+  .info-list { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 350px) {
+  .header-inner { gap: 6px; }
+  .lang-btn { padding: 0 8px; gap: 5px; }
+  .lang-switch { margin-right: 0; }
+}

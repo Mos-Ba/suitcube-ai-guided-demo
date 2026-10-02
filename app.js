@@ -54,6 +54,7 @@ const state = {
   photos: [null, null, null, null], // { url, file }
   failedPhotos: [],
   consent: false,
+  consentReset: false, // เคยยินยอมแล้วแต่ข้อมูลเปลี่ยน → ขอยินยอมใหม่พร้อมบอกเหตุผล
   result: null,
   busy: false,
   errorMsg: '',      // ข้อความ error ของขั้นปัจจุบัน (เก็บใน state เพราะ render เป็น async)
@@ -400,13 +401,14 @@ function render() {
       ${PREVIEW_MODE ? `<p class="preview-note">${t('previewNote')}</p>` : ''}
       <div class="actions">
         <button type="button" class="secondary" data-step="1">${t('back')}</button>
-        <button type="button" class="primary" id="result" ${state.consent ? '' : 'disabled'}>${t('submit')}</button>
+        <button type="button" class="primary" id="result" aria-describedby="submit-hint" ${state.consent ? '' : 'disabled'}>${t('submit')}</button>
       </div>
+      <p class="submit-hint" id="submit-hint" ${state.consent ? 'hidden' : ''}>${state.consentReset ? t('consentReset') : t('submitHint')}</p>
     `;
   } else {
     const r = state.result || {};
     const m = r.measurements || {};
-    const fmt = n => (typeof n === 'number' ? n.toFixed(2) : '–');
+    const fmt = n => (typeof n === 'number' ? `${n.toFixed(2)}″` : '–');
     // API ส่ง "sz46" — หน้าผลแสดงแค่ตัวเลขตามแบบ
     const sizeNum = s => escapeText(String(s || '–').replace(/^sz/i, ''));
     // ไซส์แนะนำคิดใหม่จากรอบอก + ค่าเผื่อ (API ส่งไซส์ที่เทียบจากรอบอกตัวมา) — ถ้าไม่มีรอบอกใช้ของ API
@@ -477,7 +479,7 @@ function render() {
             <span class="unit-pill">${t('unitPill')}</span>
           </div>
           <div class="measure-grid">
-            ${measures.map(([label, v]) => `<div class="measure-item"><span>${label}</span><strong>${fmt(v)}″</strong></div>`).join('')}
+            ${measures.map(([label, v]) => `<div class="measure-item"><span>${label}</span><strong>${fmt(v)}</strong></div>`).join('')}
           </div>
           ${confirmWaist ? `<p class="result-alert">${t('confirmWaist')}</p>` : ''}
           ${warnings.length ? `
@@ -508,6 +510,7 @@ function bind() {
       state.values[e.target.name] = e.target.value;
       state.max = 0;
       state.result = null;
+      dataChanged();
       // ช่องที่ขึ้น error อยู่: ตรวจใหม่ทุกครั้งที่พิมพ์ ให้ข้อความหายทันทีที่ค่าถูก
       if (e.target.getAttribute('aria-invalid') === 'true') validateField(e.target);
     }
@@ -523,8 +526,11 @@ function bind() {
 
   document.querySelector('#consent')?.addEventListener('change', e => {
     state.consent = e.target.checked;
+    state.consentReset = false;
     const btn = document.querySelector('#result');
     if (btn) btn.disabled = !state.consent;
+    const hint = document.querySelector('#submit-hint');
+    if (hint) { hint.hidden = state.consent; hint.textContent = t('submitHint'); }
   });
 
   basics?.addEventListener('submit', e => {
@@ -543,7 +549,8 @@ function bind() {
   });
 
   document.querySelector('#photos-next')?.addEventListener('click', () => {
-    if (state.photos.some(p => !p)) return error(t('errNeed4'));
+    const missing = angles.filter((_, i) => !state.photos[i]);
+    if (missing.length) return error(t('errMissing', { angles: missing.join(t('listSep')) }));
     go(2);
   });
 
@@ -551,6 +558,11 @@ function bind() {
 
   document.querySelector('#print')?.addEventListener('click', () => window.print());
   document.querySelector('#reset')?.addEventListener('click', () => showHelp('reset'));
+}
+
+function dataChanged() {
+  if (state.consent) state.consentReset = true;
+  state.consent = false;
 }
 
 function error(t) {
@@ -563,28 +575,18 @@ function loadingHTML() {
   return `<div class="loading" role="status">
     <div class="tape" aria-hidden="true"><div class="tape-ticks"></div><div class="tape-tab"></div></div>
     <h2>${t('loadingTitle')}</h2>
-    <p class="sub loading-status">${t('loadingSteps')[0]}</p>
+    <p class="sub loading-status">${t('loadingStatus')}</p>
     <p class="loading-hint">${t('loadingHint')}</p>
   </div>`;
 }
 
-// สลับข้อความสถานะทุก 2.2 วินาที ให้รู้ว่าระบบยังทำงานอยู่ (render() ครั้งถัดไปจะหยุดให้เอง)
+// เกิน 12 วินาทีแล้วยังไม่ได้ผล: บอกว่ายังทำงานอยู่ ไม่ต้องกดซ้ำ (render() ครั้งถัดไปยกเลิก timer ให้เอง)
+const SLOW_AFTER_MS = 12_000;
 function startLoadingTicker() {
-  let i = 0;
-  state.loadingTimer = setInterval(() => {
-    const el = surface.querySelector('.loading-status');
-    if (!el) return clearInterval(state.loadingTimer);
-    const steps = t('loadingSteps');
-    i = (i + 1) % steps.length;
-    const swap = () => { el.textContent = steps[i]; };
-    if (reduceMotion()) return swap();
-    el.animate([{ opacity: 1, transform: 'translateY(0)' }, { opacity: 0, transform: 'translateY(-4px)' }], { duration: 180, easing: 'ease-in', fill: 'forwards' })
-      .finished.then(() => {
-        swap();
-        el.getAnimations().forEach(a => a.cancel());
-        el.animate([{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 220, easing: 'ease-out' });
-      }).catch(() => {});
-  }, 2200);
+  state.loadingTimer = setTimeout(() => {
+    const el = surface.querySelector('.loading-hint');
+    if (el) el.textContent = t('loadingSlow');
+  }, SLOW_AFTER_MS);
 }
 
 // อ่านข้อความจาก detail ของ API (เป็นได้ทั้ง string, {message,...} หรือ list ของ pydantic)
@@ -598,6 +600,7 @@ function apiMessage(detail) {
 async function submitPrediction() {
   if (state.busy || !state.consent) return;
   if (state.photos.some(p => !p?.file)) return error(t('errNeed4'));
+  if (!PREVIEW_MODE && navigator.onLine === false) return error(t('errOffline'));
 
   const isFemale = state.gender === 'female';
   const fd = new FormData();
@@ -715,7 +718,7 @@ async function fitForUpload(file, img) {
 
 async function loadPhoto(i, file) {
   if (!file) return;
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+  if (file.type && !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
     return error(t('errType'));
   }
   const url = URL.createObjectURL(file);
@@ -743,6 +746,7 @@ async function loadPhoto(i, file) {
   state.result = null;
   state.errorMsg = '';
   state.max = 1;
+  dataChanged();
   state.justAdded = i;
   render();
   state.justAdded = null;
@@ -759,6 +763,7 @@ function reset() {
     photos: [null, null, null, null],
     failedPhotos: [],
     consent: false,
+    consentReset: false,
     result: null,
     busy: false
   });
@@ -776,6 +781,7 @@ function showHelp(key) {
   const h = t('help')[key];
   if (!h) return;
   document.querySelector('#dialog-content').innerHTML = `<h2>${h[0]}</h2>${key === 'photo' ? photoStrip() : ''}${h[1]}`;
+  document.querySelector('#close-dialog').textContent = t(h[2] || 'dialogClose');
   const d = document.querySelector('#dialog');
   d.classList.remove('is-closing');
   if (!d.open) d.showModal(); // showModal ซ้ำบน dialog ที่เปิดอยู่จะ throw
@@ -797,6 +803,7 @@ document.addEventListener('click', e => {
     state.gender = gender.dataset.gender;
     state.max = 0;
     state.result = null;
+    dataChanged();
     const g = document.querySelector('.gender');
     if (state.step === 0 && g) {
       // อัปเดตในที่ ไม่วาดใหม่ทั้งฟอร์ม → แถบเลือกเลื่อน + ช่องรอบอก/สะโพกกางออกแบบลื่น
@@ -829,6 +836,7 @@ document.addEventListener('click', e => {
     state.photos[i] = null;
     state.result = null;
     state.max = 1;
+    dataChanged();
     render();
     announce(t('liveRemoved', { angle: angles[i] }));
     document.querySelector(`#photo${i}`)?.focus(); // ปุ่มที่กดหายไปแล้ว — คืนโฟกัสไว้ที่ช่องเลือกภาพของมุมเดิม
