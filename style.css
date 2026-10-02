@@ -212,10 +212,8 @@
   --font-main: 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --bg-page: #F6F5F1;
   --bg-card: #FFFFFF;
-  --bg-subtle: #FAF9F6;
   --bg-accent-light: #FBF8F2;
   
-  --ink-primary: #151615;
   /* หมึกรองอมน้ำเงินผ้าสูทเล็กน้อย — ผ่าน 4.5:1 บนกระดาษทุกเฉด (เดิม #8E9094 ได้แค่ 2.9–3.2) */
   --ink-secondary: #59606E;
   --ink-muted: #666C78;
@@ -235,17 +233,29 @@
   --danger-bg: #FDF6F5;
   --danger-line: #F0D4D0;
   --success: #2E7D32;
-  --border-focus: #C3933E;
   --radius-card: 18px;
   --radius-inner: 10px;
   --radius-pill: 9999px;
   
   --shadow-soft: 0 10px 32px rgba(25, 26, 25, 0.04);
   --shadow-card: 0 14px 44px rgba(20, 22, 20, 0.06);
-  --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.12);
 
   /* ระยะที่การ์ดขั้นตอนขยับขึ้นไปทับรูป hero (ใช้ร่วมกับตำแหน่งป้ายใน hero) */
   --hero-overlap: 200px;
+  --ease-out: cubic-bezier(.22, .61, .36, 1);
+  --ease-in: cubic-bezier(.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(.34, 1.3, .64, 1);
+  --dur-fast: 150ms;
+  --dur-base: 320ms;
+  --dur-slow: 450ms;
+  --font-display: var(--font-main); /* CI ใช้ Prompt ทั้งหมด (ตามเว็บ suitcube.com) */
+  --navy: #1C2638;
+  --navy-deep: #131A28;
+  --thread: #D4B06A;          /* ด้ายทองบนพื้น navy (สว่างกว่าทองหลัก) */
+  --paper: #FCFBF7;           /* กระดาษตั๋ว */
+  --paper-line: #E6E0D2;      /* เส้นบรรทัดบนกระดาษ */
+  --stitch: #D9D0BC;          /* รอยเย็บบนพื้นอ่อน */
+  --ink-primary: #1A2130;     /* ตัวหนังสือหลัก = navy เข้ม (เดิมดำสนิท) */
 }
 
 *, *::before, *::after {
@@ -294,6 +304,7 @@ header {
   top: 0;
   z-index: 50;
   height: 74px;
+  box-shadow: inset 0 -1px 0 var(--border-subtle), inset 0 -2px 0 var(--gold-light);
 }
 
 .header-inner {
@@ -390,7 +401,6 @@ header {
   color: var(--ink-primary);
 }
 
-
 /* ==========================================================================
    Main Content Layout
    ========================================================================== */
@@ -431,9 +441,14 @@ main {
 
 .hero-bg-img {
   width: 100%;
-  height: 100%;
   object-fit: cover;
   object-position: 76% 20%;
+  /* parallax: เผื่อความสูงรูปไว้ให้เลื่อนลงได้ 54px โดยไม่เห็นขอบ (JS ขยับ transform) */
+  position: absolute;
+  top: -12%;
+  left: 0;
+  height: 124%;
+  will-change: transform;
 }
 
 /* ขอบล่างค่อยๆ จางกลืนกับพื้นหลังหน้า + เงาอ่อนด้านซ้ายหลังข้อความให้อ่านง่าย */
@@ -452,17 +467,12 @@ main {
 }
 
 .hero-title {
-  font-size: 42px;
-  font-weight: 600;
-  line-height: 1.18;
   color: var(--ink-primary);
-  letter-spacing: -1px;
 }
 
 .hero-gold {
   display: block;
   font-size: 28px;
-  font-weight: 600;
   color: var(--gold-mark);
   margin-top: 6px;
   letter-spacing: -0.3px;
@@ -481,19 +491,20 @@ main {
   z-index: 1;
   top: 28px;
   right: var(--hero-gutter);
-  background: rgba(20, 20, 20, 0.78);
-  backdrop-filter: blur(4px);
   color: #FFFFFF;
-  padding: 5px 10px;
-  border-radius: 4px;
   display: flex;
   flex-direction: column;
   line-height: 1.2;
+  background: var(--navy);
+  outline: 1px dashed var(--thread);
+  outline-offset: -5px;
+  padding: 9px 14px;
+  border-radius: 3px;
+  backdrop-filter: none;
 }
 
 .hero-book-tag small {
   font-size: 11px;
-  letter-spacing: 0.8px;
   font-weight: 500;
 }
 
@@ -532,6 +543,7 @@ main {
   line-height: 1.65;
   color: var(--ink-secondary);
   cursor: pointer;
+  transition: background var(--dur-base) ease, border-color var(--dur-base) ease;
 }
 
 .consent input {
@@ -626,30 +638,27 @@ main {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: #EFEDE8;
-  color: var(--ink-secondary);
   font-size: 12px;
   font-weight: 500;
   display: grid;
   place-items: center;
-}
-
-.mob-dot.active {
-  background: var(--gold-primary);
-  color: #FFFFFF;
-  box-shadow: 0 2px 8px var(--gold-glow);
-}
-
-.mob-dot.complete {
-  background: var(--gold-light);
-  color: var(--gold-dark);
+  transition: background var(--dur-base) var(--ease-out), color var(--dur-base), box-shadow var(--dur-base);
+  background: #FFFFFF;
+  box-shadow: inset 0 0 0 1.5px var(--stitch);
+  color: var(--ink-muted);
+  /* stepper มือถือเป็นปุ่มจริง: กดได้ด้วยคีย์บอร์ด + พื้นที่กด 44px */
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
 }
 
 .mob-line {
   flex: 1;
-  height: 2px;
-  background: #E5E4E0;
   margin: 0 8px;
+  height: 0;
+  background: none;
+  border-top: 2px dashed var(--stitch);
+  position: relative;
 }
 
 /* ==========================================================================
@@ -681,7 +690,8 @@ main {
 /* Left: Desktop Stepper */
 .steps-column {
   padding: 38px 24px;
-  border-right: 1px solid var(--border-subtle);
+  background: var(--paper);
+  border-right: 1px dashed var(--stitch);
 }
 
 .step {
@@ -708,8 +718,10 @@ main {
   left: 17px;
   top: 42px;
   height: 28px;
-  width: 2px;
-  background: #ECEAE4;
+  /* stepper = หมุดกลัดบนรอยเย็บ: เส้นเชื่อมเป็นเส้นประ จุดเสร็จเป็นหมุดทอง จุดปัจจุบันเป็น navy ล้อมด้ายทอง */
+  width: 0;
+  background: none;
+  border-left: 2px dashed var(--stitch);
 }
 
 .step b {
@@ -718,29 +730,16 @@ main {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #EDEBE3;
-  box-shadow: inset 0 0 0 1px #E3DFD3;
-  color: var(--ink-secondary);
   font-weight: 500;
   font-size: 14px;
   flex-shrink: 0;
-  transition: all 0.2s ease;
+  transition: background var(--dur-base) var(--ease-out), color var(--dur-base), box-shadow var(--dur-base);
+  box-shadow: inset 0 0 0 1.5px var(--stitch);
 }
 
 .step.active {
   color: var(--ink-primary);
   font-weight: 600;
-}
-
-.step.active b {
-  background: var(--gold-primary);
-  color: #FFFFFF;
-  box-shadow: 0 3px 12px var(--gold-glow);
-}
-
-.step.complete b {
-  background: var(--gold-light);
-  color: var(--gold-dark);
 }
 
 .step:disabled {
@@ -754,9 +753,6 @@ main {
 }
 
 .surface-column h2 {
-  font-size: 24px;
-  font-weight: 600;
-  letter-spacing: -0.5px;
   color: var(--ink-primary);
   margin-bottom: 4px;
 }
@@ -776,6 +772,7 @@ main {
   border-radius: 8px;
   padding: 4px;
   margin: 18px 0 24px;
+  position: relative;
 }
 
 .gender button {
@@ -784,14 +781,16 @@ main {
   font-weight: 400;
   color: var(--ink-secondary);
   border-radius: 6px;
-  transition: all 0.15s ease;
+  position: relative;
+  z-index: 1;
+  transition: color var(--dur-base) ease, font-weight 0s;
 }
 
 .gender button.selected {
-  background: var(--ink-primary);
   color: #FFFFFF;
   font-weight: 500;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  background: transparent;
+  box-shadow: none;
 }
 
 /* Form Inputs */
@@ -830,6 +829,7 @@ main {
   outline: none;
   min-width: 0;
   color: var(--ink-primary);
+  transition: border-color var(--dur-fast) ease, box-shadow var(--dur-base) var(--ease-out), background var(--dur-fast) ease;
 }
 
 .input-wrap .unit-tag,
@@ -874,7 +874,6 @@ main {
 }
 
 .primary {
-  background: var(--ink-primary);
   color: #FFFFFF;
   border: 1px solid var(--ink-primary);
   border-radius: 8px;
@@ -887,7 +886,8 @@ main {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: background 0.2s ease, transform 0.1s ease;
+  background: var(--navy);
+  border-color: var(--navy);
 }
 
 .primary:hover {
@@ -901,6 +901,7 @@ main {
 .primary:disabled {
   opacity: 0.6;
   cursor: wait;
+  transition: opacity var(--dur-base) ease;
 }
 
 .secondary {
@@ -911,7 +912,6 @@ main {
   font-size: 14px;
   font-weight: 400;
   color: var(--ink-primary);
-  transition: background 0.15s;
 }
 
 .secondary:hover {
@@ -988,7 +988,6 @@ main {
   font-size: 20px;
   font-weight: 600;
   color: var(--ink-primary);
-  letter-spacing: -0.3px;
   margin-bottom: 20px;
 }
 
@@ -1074,12 +1073,6 @@ main {
   color: var(--ink-primary);
 }
 
-.footer-divider {
-  width: 1px;
-  height: 18px;
-  background: var(--border-subtle);
-}
-
 /* ==========================================================================
    Photo Upload Step (Step 1)
    ========================================================================== */
@@ -1094,8 +1087,10 @@ main {
   border: 1px dashed #D3CDBF;
   border-radius: 10px;
   padding: 14px;
-  background: #FCFBF9;
   text-align: center;
+  transition: border-color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), background var(--dur-fast) ease;
+  border-color: #DCCFAF;
+  background: var(--paper);
 }
 
 .photo-preview {
@@ -1142,22 +1137,6 @@ main {
   mix-blend-mode: multiply;
 }
 
-.photo-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  color: var(--ink-muted);
-}
-
-.photo-placeholder .ph-icon {
-  font-size: 24px;
-}
-
-.photo-placeholder small {
-  font-size: 11px;
-}
-
 .check-mark-text {
   color: var(--success);
   margin-left: 4px;
@@ -1180,7 +1159,7 @@ main {
   font-size: 12px;
   cursor: pointer;
   background: #FFFFFF;
-  transition: background 0.15s;
+  transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-out);
 }
 
 .photo-card label:hover {
@@ -1230,7 +1209,6 @@ main {
   display: flex;
   justify-content: space-between;
   padding: 12px 0;
-  border-bottom: 1px solid var(--border-subtle);
   font-size: 14px;
 }
 
@@ -1306,22 +1284,6 @@ main {
   color: var(--ink-secondary);
 }
 
-.modal-media-wrap {
-  text-align: center;
-  margin: 14px 0 18px;
-  background: #FAF8F4;
-  border-radius: 8px;
-  border: 1px solid var(--border-subtle);
-  padding: 10px;
-}
-
-.modal-guide-gif {
-  max-width: 100%;
-  max-height: 220px;
-  border-radius: 6px;
-  object-fit: contain;
-}
-
 .text-button {
   color: var(--gold-dark);
   font-size: 13px;
@@ -1344,7 +1306,6 @@ main {
 }
 
 .surface-column .result-title h2 {
-  font-size: 30px;
   text-wrap: balance;
 }
 
@@ -1363,16 +1324,20 @@ main {
 
 /* Size card */
 .size-card {
-  background: var(--ink-primary);
   color: #FFFFFF;
   border-radius: var(--radius-card);
-  padding: 24px 26px 18px;
+  /* การ์ดไซส์ = ป้ายทอติดเสื้อ: navy ขอบด้ายทองเย็บโดยรอบ */
+  position: relative;
+  background: var(--navy);
+  padding: 26px 28px 20px;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
 }
 
 .size-label {
-  color: var(--gold-primary);
   font-size: 14px;
   font-weight: 500;
+  color: rgba(255, 255, 255, .78);
 }
 
 .size-main {
@@ -1382,14 +1347,16 @@ main {
   margin-top: 6px;
   padding-bottom: 16px;
   border-bottom: 1px solid rgba(195, 147, 62, 0.45);
+  border-bottom-color: rgba(212, 176, 106, .5);
+  flex-wrap: wrap; row-gap: 10px;
 }
 
 .size-num {
   font-size: 76px;
-  font-weight: 700;
   line-height: 0.95;
-  letter-spacing: -2px;
   font-variant-numeric: tabular-nums;
+  display: inline-block;
+  letter-spacing: -2px;
 }
 
 .size-len {
@@ -1440,7 +1407,7 @@ main {
   width: 162px; /* viewBox 400×520 */
   height: 210px;
   margin: 14px auto 2px;
-  color: var(--gold-primary);
+  color: var(--thread);
 }
 
 /* Soft white cards */
@@ -1455,15 +1422,14 @@ main {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
   margin-bottom: 10px;
+  flex-wrap: wrap; gap: 6px 12px;
 }
 
 .card-head h3 {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 18px;
   font-weight: 600;
   color: var(--ink-primary);
 }
@@ -1492,10 +1458,11 @@ main {
 .unit-pill {
   font-size: 12px;
   color: var(--ink-secondary);
-  background: #F2F0EB;
   padding: 4px 12px;
   border-radius: var(--radius-pill);
   white-space: nowrap;
+  background: #FFFFFF;
+  border: 1px solid var(--paper-line);
 }
 
 .info-list {
@@ -1507,9 +1474,9 @@ main {
   align-items: center;
   gap: 14px;
   padding: 9px 0;
-  border-bottom: 1px solid var(--border-subtle);
   font-size: 14px;
   color: var(--ink-primary);
+  min-width: 0;
 }
 
 .info-list li:last-child {
@@ -1526,6 +1493,8 @@ main {
 /* Measurements */
 .measure-card {
   padding: 22px 26px 24px;
+  /* ปุ่มเรียงตามความกว้างของการ์ดเอง (มีคอลัมน์ขั้นตอนด้านซ้าย การ์ดจึงแคบได้แม้จอกว้าง) */
+  container-type: inline-size;
 }
 
 .measure-grid {
@@ -1570,13 +1539,14 @@ main {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #F5EEE1;
   border-radius: var(--radius-inner);
   padding: 12px 16px;
   font-size: 14px;
   line-height: 1.5;
   color: var(--gold-dark);
   margin-bottom: 18px;
+  background: #F6EFDF;
+  border: 1px dashed #E3D2AC;
 }
 
 .result-note .ic {
@@ -1600,11 +1570,6 @@ main {
   justify-content: center;
   gap: 10px;
   white-space: nowrap;
-}
-
-/* ปุ่มเรียงตามความกว้างของการ์ดเอง (มีคอลัมน์ขั้นตอนด้านซ้าย การ์ดจึงแคบได้แม้จอกว้าง) */
-.measure-card {
-  container-type: inline-size;
 }
 
 @container (max-width: 500px) {
@@ -1651,16 +1616,6 @@ main {
   padding: 60px 0;
 }
 
-.spinner {
-  width: 44px;
-  height: 44px;
-  border: 3px solid #EBE8E0;
-  border-top-color: var(--gold-primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin: 0 auto 24px;
-}
-
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -1668,7 +1623,6 @@ main {
 /* ==========================================================================
    4 ขั้นตอนสู่ขนาดของคุณ (Journey Section)
    ========================================================================== */
-
 
 /* ==========================================================================
    Footer & Dialog
@@ -1692,9 +1646,9 @@ footer {
 
 .footer-inner small {
   font-size: 11px;
-  letter-spacing: 0.8px;
   margin-left: 6px;
-  color: var(--ink-muted);
+  letter-spacing: 2px;
+  color: var(--gold-dark);
 }
 
 .footer-inner button {
@@ -1793,12 +1747,10 @@ dialog a {
     display: none; /* Matches mobile mockup layout */
   }
 
-  .hero-title {
-    font-size: 32px;
-  }
   
   .hero-gold {
     font-size: 22px;
+    color: var(--gold-dark);
   }
   
   .hero-subtitle {
@@ -1839,10 +1791,6 @@ dialog a {
     display: flex;
   }
   
-  .guide-column:not(.accordion-open) .guide-box {
-    display: none;
-  }
-  
   .guide-column.accordion-open .guide-acc-arrow {
     transform: rotate(180deg);
   }
@@ -1859,9 +1807,6 @@ dialog a {
     text-align: center;
   }
   
-  .footer-divider {
-    display: none;
-  }
   
   /* Sticky Action Button on Mobile (Matching Mockup) */
   .actions {
@@ -1904,10 +1849,6 @@ dialog a {
     padding: 22px 16px 24px;
   }
 
-  .surface-column .result-title h2 {
-    font-size: 24px;
-  }
-
   .result-title {
     margin-bottom: 18px;
   }
@@ -1916,10 +1857,6 @@ dialog a {
   .result-side {
     grid-template-columns: 1fr;
     gap: 14px;
-  }
-
-  .size-card {
-    padding: 20px 20px 16px;
   }
 
   .size-num {
@@ -1942,7 +1879,6 @@ dialog a {
   }
 
   .info-list li {
-    border-bottom: none;
     padding: 6px 0;
     font-size: 13px;
     gap: 10px;
@@ -2004,17 +1940,10 @@ dialog a {
    Motion system — ลื่น นุ่ม ไม่รีบ (ภาษาเดียวกันทั้งหน้า)
    easing ชุดเดียว · เข้า 320–450ms / ออก 150ms · stagger 55ms · ปิดหมดเมื่อ reduce-motion
    ========================================================================== */
-:root {
-  --ease-out: cubic-bezier(.22, .61, .36, 1);
-  --ease-in: cubic-bezier(.4, 0, 1, 1);
-  --ease-spring: cubic-bezier(.34, 1.3, .64, 1);
-  --dur-fast: 150ms;
-  --dur-base: 320ms;
-  --dur-slow: 450ms;
-}
 
 html {
   scroll-behavior: smooth;
+  scrollbar-color: var(--stitch) var(--bg-page);
 }
 
 /* ── เนื้อหาในการ์ดลอยขึ้นทีละชิ้นตอนเปลี่ยนขั้น (JS ใส่ .rise + --i, ทิศทางผ่าน --dx) ── */
@@ -2045,24 +1974,11 @@ html {
   animation: fade-in 900ms var(--ease-out) 350ms both;
 }
 
-/* parallax: เผื่อความสูงรูปไว้ให้เลื่อนลงได้ 54px โดยไม่เห็นขอบ (JS ขยับ transform) */
-.hero-bg-img {
-  position: absolute;
-  top: -12%;
-  left: 0;
-  height: 124%;
-  will-change: transform;
-}
-
 /* ── Stepper: จุด active pop ขึ้น · เส้นเชื่อม/สีไล่ตาม ── */
 @keyframes pop {
   0%   { transform: scale(.78); }
   60%  { transform: scale(1.08); }
   100% { transform: scale(1); }
-}
-
-.step b {
-  transition: background var(--dur-base) var(--ease-out), color var(--dur-base), box-shadow var(--dur-base);
 }
 
 .step.active b,
@@ -2076,10 +1992,6 @@ html {
   stroke-width: 2;
 }
 
-.mob-dot {
-  transition: background var(--dur-base) var(--ease-out), color var(--dur-base), box-shadow var(--dur-base);
-}
-
 /* ── ปุ่ม: ยกเบาๆ ตอน hover กดแล้วยุบนิดเดียว ── */
 .primary,
 .secondary {
@@ -2089,7 +2001,7 @@ html {
 
 .primary:not(:disabled):hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(21, 22, 21, .18);
+  background: var(--navy-deep);
 }
 
 .secondary:not(:disabled):hover {
@@ -2102,10 +2014,6 @@ html {
 .secondary:not(:disabled):active {
   transform: translateY(0) scale(.985);
   box-shadow: none;
-}
-
-.primary:disabled {
-  transition: opacity var(--dur-base) ease;
 }
 
 .text-button,
@@ -2121,9 +2029,6 @@ html {
 }
 
 /* ── เลือกเพศ: แถบดำเลื่อนไปมาแทนการสลับสี ── */
-.gender {
-  position: relative;
-}
 
 .gender::before {
   content: '';
@@ -2132,25 +2037,14 @@ html {
   bottom: 4px;
   left: 4px;
   width: calc(50% - 4px);
-  background: var(--ink-primary);
   border-radius: 6px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, .15);
   transition: transform var(--dur-base) var(--ease-out);
+  background: var(--navy);
 }
 
 .gender[data-gender="female"]::before {
   transform: translateX(100%);
-}
-
-.gender button {
-  position: relative;
-  z-index: 1;
-  transition: color var(--dur-base) ease, font-weight 0s;
-}
-
-.gender button.selected {
-  background: transparent;
-  box-shadow: none;
 }
 
 /* ── ช่องรอบอก/สะโพก (สูทผู้หญิง) กางออก-พับเก็บแบบลื่น ── */
@@ -2172,14 +2066,8 @@ html {
 }
 
 /* ── ช่องกรอก: โฟกัสนุ่ม ── */
-.input-wrap input {
-  transition: border-color var(--dur-fast) ease, box-shadow var(--dur-base) var(--ease-out), background var(--dur-fast) ease;
-}
 
 /* ── การ์ดรูป: hover ยก · รูปที่เพิ่งอัปโหลด fade เข้า · ✓ pop ── */
-.photo-card {
-  transition: border-color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), background var(--dur-fast) ease;
-}
 
 .photo-card:hover {
   border-color: #D9C9A6;
@@ -2205,18 +2093,11 @@ html {
   animation: pop 420ms var(--ease-spring) 120ms both;
 }
 
-.photo-card label {
-  transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-out);
-}
-
 .photo-card label:active {
   transform: scale(.97);
 }
 
 /* ── ช่องยินยอม: กล่องสว่างขึ้นเมื่อติ๊ก ── */
-.consent {
-  transition: background var(--dur-base) ease, border-color var(--dur-base) ease;
-}
 
 .consent:has(input:checked) {
   background: var(--gold-light);
@@ -2230,15 +2111,8 @@ html {
   color: var(--ink-muted);
 }
 
-.spinner {
-  animation: spin 900ms var(--ease-out) infinite;
-  border-top-color: var(--gold-primary);
-  border-right-color: var(--gold-light);
-}
-
 /* ── หน้าผล: ตัวเลขไซส์ pop ตามหลังการ์ด ── */
 .size-num {
-  display: inline-block;
   animation: pop 520ms var(--ease-spring) 260ms both;
 }
 
@@ -2354,16 +2228,6 @@ dialog.is-closing::backdrop {
    ภาษาของชิ้นส่วนมาจากโต๊ะช่าง: ป้ายทอ · ตั๋ววัดตัว · รอยเย็บ · หมุด · สายวัด · กระดาษแพตเทิร์น
    จานสี: ครีม (กระดาษ) · navy (ผ้าสูท) · ทอง (ด้าย/ชอล์ก)   —   ฟอนต์: Prompt ทั้งหมดตาม CI
    ========================================================================== */
-:root {
-  --font-display: var(--font-main); /* CI ใช้ Prompt ทั้งหมด (ตามเว็บ suitcube.com) */
-  --navy: #1C2638;
-  --navy-deep: #131A28;
-  --thread: #D4B06A;          /* ด้ายทองบนพื้น navy (สว่างกว่าทองหลัก) */
-  --paper: #FCFBF7;           /* กระดาษตั๋ว */
-  --paper-line: #E6E0D2;      /* เส้นบรรทัดบนกระดาษ */
-  --stitch: #D9D0BC;          /* รอยเย็บบนพื้นอ่อน */
-  --ink-primary: #1A2130;     /* ตัวหนังสือหลัก = navy เข้ม (เดิมดำสนิท) */
-}
 
 /* grain กระดาษบางๆ ทั้งหน้า (SVG noise, ไม่โหลดรูป) */
 body::before {
@@ -2429,28 +2293,12 @@ dialog h2 {
 }
 
 /* ── Header / footer: เส้นด้ายทองบางๆ ── */
-header {
-  box-shadow: inset 0 -1px 0 var(--border-subtle), inset 0 -2px 0 var(--gold-light);
-}
 
 .footer-inner > span:first-child {
   letter-spacing: .3px;
 }
 
-.footer-inner small {
-  letter-spacing: 2px;
-  color: var(--gold-dark);
-}
-
 /* ── Hero: ป้ายมุมขวา = ป้ายทอ (navy + ขอบด้ายทอง) ── */
-.hero-book-tag {
-  background: var(--navy);
-  outline: 1px dashed var(--thread);
-  outline-offset: -5px;
-  padding: 9px 14px;
-  border-radius: 3px;
-  backdrop-filter: none;
-}
 
 .hero-book-tag small {
   color: var(--thread);
@@ -2458,18 +2306,9 @@ header {
 }
 
 /* ── ปุ่มหลัก = navy ── */
-.primary {
-  background: var(--navy);
-  border-color: var(--navy);
-}
 
 .primary:not(:disabled):hover {
-  background: var(--navy-deep);
   box-shadow: 0 8px 20px rgba(28, 38, 56, .22);
-}
-
-.gender::before {
-  background: var(--navy);
 }
 
 /* ── การ์ดหลัก: แถบ navy บน + คอลัมน์ขั้นตอนเป็นกระดาษแพตเทิร์น ── */
@@ -2477,21 +2316,8 @@ header {
   border-top: 3px solid var(--navy);
 }
 
-.steps-column {
-  background: var(--paper);
-  border-right: 1px dashed var(--stitch);
-}
-
-/* stepper = หมุดกลัดบนรอยเย็บ: เส้นเชื่อมเป็นเส้นประ จุดเสร็จเป็นหมุดทอง จุดปัจจุบันเป็น navy ล้อมด้ายทอง */
-.step:not(:last-child)::after {
-  width: 0;
-  background: none;
-  border-left: 2px dashed var(--stitch);
-}
-
 .step b {
   background: #FFFFFF;
-  box-shadow: inset 0 0 0 1.5px var(--stitch);
   color: var(--ink-muted);
 }
 
@@ -2505,18 +2331,6 @@ header {
   background: var(--gold-primary);
   color: #FFFFFF;
   box-shadow: none;
-}
-
-.mob-line {
-  height: 0;
-  background: none;
-  border-top: 2px dashed var(--stitch);
-}
-
-.mob-dot {
-  background: #FFFFFF;
-  box-shadow: inset 0 0 0 1.5px var(--stitch);
-  color: var(--ink-muted);
 }
 
 .mob-dot.active {
@@ -2537,11 +2351,6 @@ header {
   border-bottom: 1px dashed var(--stitch);
 }
 
-.photo-card {
-  border-color: #DCCFAF;
-  background: var(--paper);
-}
-
 /* ── หน้ารอ AI: สายวัดคลี่ออก ── */
 .tape {
   position: relative;
@@ -2552,6 +2361,7 @@ header {
   background: #F4EFE3;
   border: 1px solid #E2D9C3;
   overflow: hidden;
+  transform-origin: left center;
 }
 
 .tape-ticks {
@@ -2586,36 +2396,15 @@ header {
 }
 
 /* ── หน้าผล ── */
-/* การ์ดไซส์ = ป้ายทอติดเสื้อ: navy ขอบด้ายทองเย็บโดยรอบ */
-.size-card {
-  position: relative;
-  background: var(--navy);
-  padding: 26px 28px 20px;
-  print-color-adjust: exact;
-  -webkit-print-color-adjust: exact;
-}
 
 .size-card .eyebrow {
   display: block;
   margin-bottom: 10px;
 }
 
-.size-label {
-  color: rgba(255, 255, 255, .78);
-}
-
 .size-num {
   font-family: var(--font-display);
   font-weight: 700;
-  letter-spacing: -2px;
-}
-
-.size-main {
-  border-bottom-color: rgba(212, 176, 106, .5);
-}
-
-.size-illus {
-  color: var(--thread);
 }
 
 /* การ์ดสัดส่วน = ตั๋ววัดตัวบนกระดาษ: ขอบบนเป็นสายวัด, หัวตั๋วเส้นประฉีก, ตัวเลขฟอนต์หัวข้อ */
@@ -2676,16 +2465,6 @@ header {
   background: var(--paper);
 }
 
-.unit-pill {
-  background: #FFFFFF;
-  border: 1px solid var(--paper-line);
-}
-
-.result-note {
-  background: #F6EFDF;
-  border: 1px dashed #E3D2AC;
-}
-
 /* ── สูทแนะนำ: การ์ดสินค้าจาก suitcube.com ── */
 .picks-section {
   margin: 48px 0 24px;
@@ -2693,6 +2472,11 @@ header {
 
 .picks-head {
   margin-bottom: 26px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .picks-head h2 {
@@ -2708,20 +2492,7 @@ header {
   margin-top: 3px;
 }
 
-
-
-
-
-
-
-
-
 @media (max-width: 860px) {
-
-
-
-
-
 
   .hero-title {
     font-size: 32px;
@@ -2768,13 +2539,6 @@ header {
 @media print { .preview-banner { border-style: solid; } }
 
 /* ── สูทแนะนำ: การ์ด ── */
-.picks-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
 
 .picks-all {
   font-size: 13.5px;
@@ -2884,14 +2648,7 @@ input[type="checkbox"], input[type="radio"] {
   accent-color: var(--gold-mark);
 }
 
-html {
-  scrollbar-color: var(--stitch) var(--bg-page);
-}
-
 /* มือถือ: หัวข้อทองเหลือ 22px (ไม่นับเป็นตัวใหญ่) และวางบนพื้นกระดาษ → ใช้ทองหมึกให้ผ่าน 4.5:1 */
-@media (max-width: 860px) {
-  .hero-gold { color: var(--gold-dark); }
-}
 
 /* ==========================================================================
    Touch adaptation — นิ้วกดได้ทุกปุ่ม (พื้นที่กด ≥ 44px)
@@ -3005,13 +2762,16 @@ html {
 
 /* error ใต้ช่องกรอก: บอกทั้งด้วยสี ขอบ และข้อความ (ไม่พึ่งสีอย่างเดียว) */
 .field-error {
-  margin: 6px 0 0;
   font-size: 13px;
   line-height: 1.5;
   color: var(--danger);
+  display: grid;
+  grid-template-rows: 0fr;
+  margin: 0;
+  opacity: 0;
+  transition: grid-template-rows var(--dur-base) var(--ease-out), margin-top var(--dur-base) var(--ease-out), opacity 200ms ease;
 }
 .field-error::before {
-  content: '!';
   display: inline-grid;
   place-items: center;
   width: 16px;
@@ -3023,6 +2783,7 @@ html {
   font-size: 11px;
   font-weight: 600;
   vertical-align: 1px;
+  content: none;
 }
 .input-wrap.invalid,
 .input-wrap.invalid:focus-within {
@@ -3030,12 +2791,6 @@ html {
   box-shadow: 0 0 0 3px rgba(181, 55, 42, 0.12);
 }
 
-/* stepper มือถือเป็นปุ่มจริง: กดได้ด้วยคีย์บอร์ด + พื้นที่กด 44px */
-.mob-dot {
-  position: relative;
-  flex-shrink: 0;
-  cursor: pointer;
-}
 .mob-dot:disabled { cursor: default; }
 .mob-dot::after {
   content: '';
@@ -3144,7 +2899,9 @@ html {
 }
 @media (max-width: 350px) {
   .brand-logo { height: 20px; width: auto; }
-  .header-inner { padding: 0 12px; }
+  .header-inner { padding: 0 12px;
+    gap: 6px;
+  }
 }
 
 @media print { .lang-switch { display: none; } }
@@ -3174,6 +2931,9 @@ html {
   font-size: 13px;
   color: var(--ink-muted);
   text-align: right;
+  overflow-wrap: anywhere;
+  /* ปุ่มส่ง: เหตุผลที่ยังกดไม่ได้ จางเข้า-ออก */
+  transition: opacity 200ms ease;
 }
 
 .contact-list {
@@ -3205,11 +2965,7 @@ dialog .secondary.danger:hover { background: var(--danger-bg); border-color: var
 /* ลูกของ grid/flex ต้องยอมหดได้ ไม่งั้นการ์ดไซส์ดันกว้างเกินจอ (เนื้อหาถูกตัดขอบขวา) */
 .result-layout > *,
 .result-side > * { min-width: 0; }
-.size-main { flex-wrap: wrap; row-gap: 10px; }
-.card-head { flex-wrap: wrap; gap: 6px 12px; }
-.info-list li { min-width: 0; }
 .info-list li span { min-width: 0; overflow-wrap: anywhere; }
-.submit-hint { overflow-wrap: anywhere; }
 
 @media (max-width: 400px) {
   /* ข้อมูลของคุณ: คอลัมน์เดียว ป้ายยาวอย่าง "Trouser waist 30 in" ไม่ถูกบีบ */
@@ -3217,7 +2973,6 @@ dialog .secondary.danger:hover { background: var(--danger-bg); border-color: var
 }
 
 @media (max-width: 350px) {
-  .header-inner { gap: 6px; }
   .lang-btn { padding: 0 8px; gap: 5px; }
   .lang-switch { margin-right: 0; }
 }
@@ -3274,13 +3029,6 @@ dialog .secondary.danger:hover { background: var(--danger-bg); border-color: var
 }
 
 /* ── 3) error ใต้ช่องกรอก: กางออก/พับเก็บ ── */
-.field-error {
-  display: grid;
-  grid-template-rows: 0fr;
-  margin: 0;
-  opacity: 0;
-  transition: grid-template-rows var(--dur-base) var(--ease-out), margin-top var(--dur-base) var(--ease-out), opacity 200ms ease;
-}
 .field-error.show {
   grid-template-rows: 1fr;
   margin-top: 6px;
@@ -3290,7 +3038,6 @@ dialog .secondary.danger:hover { background: var(--danger-bg); border-color: var
   min-height: 0;
   overflow: hidden;
 }
-.field-error::before { content: none; }
 .field-error > span:not(:empty)::before {
   content: '!';
   display: inline-grid;
@@ -3314,7 +3061,6 @@ dialog .secondary.danger:hover { background: var(--danger-bg); border-color: var
 }
 
 /* ── 6) หน้าโหลด: สายวัดม้วนเก็บเข้าตลับ (ตลับอยู่ซ้าย) ── */
-.tape { transform-origin: left center; }
 .loading.done .tape-ticks,
 .loading.done .tape-tab { animation-play-state: paused; }
 
@@ -3340,7 +3086,6 @@ dialog .secondary.danger:hover { background: var(--danger-bg); border-color: var
   animation: thread-down 420ms var(--ease-out) 120ms both;
 }
 
-.mob-line { position: relative; }
 .mob-line::after {
   content: '';
   position: absolute;
@@ -3353,5 +3098,3 @@ dialog .secondary.danger:hover { background: var(--danger-bg); border-color: var
 }
 .mob-line.done::after { clip-path: inset(-2px 0 -2px 0); }
 
-/* ปุ่มส่ง: เหตุผลที่ยังกดไม่ได้ จางเข้า-ออก */
-.submit-hint { transition: opacity 200ms ease; }
