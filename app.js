@@ -914,6 +914,7 @@ function setLang(lang) {
   labels = t('steps');
   angles = t('angles');
   applyStaticI18n();
+  syncLangUI();
   stepperKey = '';
   picksKey = '';
   if (state.busy) {
@@ -928,11 +929,54 @@ function setLang(lang) {
   render();
 }
 
-const langSelect = document.querySelector('#lang-select');
-if (langSelect) {
-  langSelect.value = LANG;
-  langSelect.addEventListener('change', () => setLang(langSelect.value));
+// เมนูเลือกภาษา (listbox): คลิก/แตะ · ลูกศรขึ้นลง · Enter เลือก · Esc หรือคลิกข้างนอกเพื่อปิด
+const langBtn = document.querySelector('#lang-btn');
+const langMenu = document.querySelector('#lang-menu');
+const langOpts = langMenu ? [...langMenu.querySelectorAll('[data-lang]')] : [];
+
+function syncLangUI() {
+  langOpts.forEach(o => o.setAttribute('aria-selected', o.dataset.lang === LANG));
+  const cur = langOpts.find(o => o.dataset.lang === LANG);
+  if (!cur || !langBtn) return;
+  document.querySelector('#lang-current').textContent = cur.dataset.short;
+  langBtn.setAttribute('aria-label', `${t('langLabel')}: ${cur.textContent.trim()}`);
 }
+
+function toggleLangMenu(open, focusBtn = true) {
+  if (!langMenu || langMenu.hidden === !open) return;
+  langMenu.hidden = !open;
+  langBtn.setAttribute('aria-expanded', open);
+  if (open) (langOpts.find(o => o.dataset.lang === LANG) || langOpts[0]).focus();
+  else if (focusBtn) langBtn.focus();
+}
+
+if (langBtn && langMenu) {
+  langBtn.addEventListener('click', () => toggleLangMenu(langMenu.hidden));
+  langBtn.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); toggleLangMenu(true); }
+  });
+  langMenu.addEventListener('click', e => {
+    const opt = e.target.closest('[data-lang]');
+    if (!opt) return;
+    toggleLangMenu(false);
+    setLang(opt.dataset.lang);
+  });
+  langMenu.addEventListener('keydown', e => {
+    const i = langOpts.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') { e.preventDefault(); langOpts[(i + 1) % langOpts.length].focus(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); langOpts[(i - 1 + langOpts.length) % langOpts.length].focus(); }
+    else if (e.key === 'Home') { e.preventDefault(); langOpts[0].focus(); }
+    else if (e.key === 'End') { e.preventDefault(); langOpts[langOpts.length - 1].focus(); }
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); document.activeElement.click(); }
+    else if (e.key === 'Escape') { e.preventDefault(); toggleLangMenu(false); }
+    else if (e.key === 'Tab') toggleLangMenu(false, false);
+  });
+  // คลิก/แตะนอกเมนู = ปิด (ไม่ดึงโฟกัสกลับ ปล่อยให้ไปตามที่ผู้ใช้กด)
+  document.addEventListener('pointerdown', e => {
+    if (!langMenu.hidden && !e.target.closest('#lang-switch')) toggleLangMenu(false, false);
+  });
+}
+syncLangUI();
 applyStaticI18n();
 
 // Initial Render (ลอยขึ้นเบาๆ ตอนโหลดหน้า)

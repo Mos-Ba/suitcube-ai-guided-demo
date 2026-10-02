@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <!-- แก้ style.css / i18n.js / app.js แล้วต้องเปลี่ยนเลข ?v= ทั้ง 3 ที่ ไม่งั้นเบราว์เซอร์ใช้ไฟล์เก่าจากแคชคู่กับ HTML ใหม่ -->
-  <link rel="stylesheet" href="style.css?v=20261002a">
+  <link rel="stylesheet" href="style.css?v=20261002b">
 </head>
 <body>
   <a class="skip-link" href="#surface" data-i18n="skip">ข้ามไปยังแบบฟอร์มวัดตัว</a>
@@ -21,16 +21,19 @@
         <img src="images/suitcube-ai-logo.webp" alt="SUITCUBE AI" class="brand-logo" width="414" height="72">
       </a>
 
-      <!-- สลับภาษา (ใช้ select ของระบบ: บนมือถือได้ตัวเลือกแบบ native) -->
-      <label class="lang-switch">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
-        <span class="sr-only" data-i18n="langLabel">ภาษา</span>
-        <select id="lang-select" autocomplete="off">
-          <option value="th" lang="th">ไทย</option>
-          <option value="en" lang="en">EN</option>
-          <option value="zh" lang="zh-Hans">中文</option>
-        </select>
-      </label>
+      <!-- สลับภาษา: เมนูวาดเอง (รายการของ <select> ระบบแต่งสไตล์ไม่ได้) — app.js คุมเปิด/ปิดและคีย์บอร์ด -->
+      <div class="lang-switch" id="lang-switch">
+        <button type="button" class="lang-btn" id="lang-btn" aria-haspopup="listbox" aria-expanded="false" aria-controls="lang-menu">
+          <svg class="lang-globe" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+          <span id="lang-current">ไทย</span>
+          <svg class="lang-chevron" viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg>
+        </button>
+        <ul class="lang-menu" id="lang-menu" role="listbox" aria-label="ภาษา" data-i18n-aria="langLabel" hidden>
+          <li role="option" tabindex="-1" data-lang="th" data-short="ไทย" lang="th"><span>ไทย</span><svg class="lang-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 6"/></svg></li>
+          <li role="option" tabindex="-1" data-lang="en" data-short="EN" lang="en"><span>English</span><svg class="lang-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 6"/></svg></li>
+          <li role="option" tabindex="-1" data-lang="zh" data-short="中文" lang="zh-Hans"><span>简体中文</span><svg class="lang-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 6"/></svg></li>
+        </ul>
+      </div>
 
       <!-- Desktop Nav -->
       <nav class="desktop-nav">
@@ -217,7 +220,7 @@
     <button type="button" class="primary" id="close-dialog" data-i18n="dialogClose">เข้าใจแล้ว</button>
   </dialog>
 
-  <script src="i18n.js?v=20261002a"></script>
-  <script src="app.js?v=20261002a"></script>
+  <script src="i18n.js?v=20261002b"></script>
+  <script src="app.js?v=20261002b"></script>
 </body>
 </html>

@@ -2852,44 +2852,86 @@ html {
    ========================================================================== */
 .lang-switch {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
   margin-left: auto;
   margin-right: 20px;
-  height: 34px;
-  padding: 0 8px 0 10px;
+}
+
+.lang-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 12px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-pill);
-  color: var(--ink-secondary);
   background: #FFFFFF;
-  cursor: pointer;
-  transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease;
-}
-.lang-switch:hover { border-color: var(--gold-primary); color: var(--ink-primary); }
-.lang-switch:focus-within {
-  outline: 2px solid var(--gold-primary);
-  outline-offset: 2px;
-}
-.lang-switch svg { flex-shrink: 0; color: var(--gold-mark); } /* ทองเดียวกับไอคอนปรึกษาเรา */
-.lang-switch select {
-  appearance: none;
-  -webkit-appearance: none;
-  border: none;
-  outline: none;
-  background: transparent url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%2359606E' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='m3 4.5 3 3 3-3'/></svg>") right center / 12px no-repeat;
-  padding: 0 16px 0 0;
-  font: inherit;
+  color: var(--ink-primary);
   font-size: 13px;
   font-weight: 500;
-  color: inherit;
-  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color var(--dur-fast) ease, background var(--dur-fast) ease;
 }
-.lang-switch select option { color: #1A2130; background: #FFFFFF; }
+.lang-btn:hover,
+.lang-btn[aria-expanded="true"] { border-color: var(--gold-primary); background: var(--paper); }
+.lang-globe { color: var(--gold-mark); flex-shrink: 0; } /* ทองเดียวกับไอคอนปรึกษาเรา */
+.lang-chevron {
+  color: var(--ink-muted);
+  flex-shrink: 0;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.lang-btn[aria-expanded="true"] .lang-chevron { transform: rotate(180deg); }
+
+/* เมนู: กระดาษตั๋วใบเล็ก ห้อยใต้ปุ่ม */
+.lang-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 70;
+  min-width: 172px;
+  padding: 6px;
+  list-style: none;
+  background: var(--paper);
+  border: 1px solid var(--paper-line);
+  border-radius: 12px;
+  box-shadow: 0 14px 34px rgba(28, 38, 56, 0.14), 0 2px 6px rgba(28, 38, 56, 0.06);
+  transform-origin: top right;
+  animation: lang-in 160ms var(--ease-out);
+}
+.lang-menu[hidden] { display: none; }
+@keyframes lang-in {
+  from { opacity: 0; transform: translateY(-6px) scale(.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+.lang-menu li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ink-primary);
+  cursor: pointer;
+  outline: none;
+  transition: background var(--dur-fast) ease;
+}
+.lang-menu li + li { margin-top: 2px; }
+.lang-menu li:hover,
+.lang-menu li:focus-visible { background: var(--gold-light); }
+.lang-menu li:focus-visible { box-shadow: inset 0 0 0 1.5px var(--gold-primary); }
+.lang-menu li[aria-selected="true"] { font-weight: 600; }
+.lang-check { color: var(--gold-dark); opacity: 0; flex-shrink: 0; }
+.lang-menu li[aria-selected="true"] .lang-check { opacity: 1; }
+/* ตัวจีนในเมนูใช้ฟอนต์ระบบได้เลย ไม่ต้องรอโหลด Noto */
+.lang-menu li[lang="zh-Hans"] { font-family: 'Prompt', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
 
 @media (pointer: coarse), (max-width: 860px) {
-  .lang-switch { height: 44px; margin-right: 4px; }
-  .lang-switch select { font-size: 16px; } /* กัน iOS ซูมตอนแตะ */
+  .lang-switch { margin-right: 4px; }
+  .lang-btn { height: 44px; padding: 0 10px; font-size: 14px; }
+  .lang-menu li { min-height: 46px; font-size: 15px; }
 }
 
 /* จอแคบ: ซ่อนคำว่า "ปรึกษาเรา" เหลือไอคอน (ปุ่มยังมี aria-label) ให้พอที่สำหรับตัวเลือกภาษา */
