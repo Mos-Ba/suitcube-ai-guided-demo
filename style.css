@@ -58,6 +58,7 @@ body {
   font-weight: 300;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  min-height: 100dvh; /* มือถือ: ไม่นับแถบ address bar ที่ยืด/หด */
   display: flex;
   flex-direction: column;
 }
@@ -2686,4 +2687,72 @@ html {
 /* มือถือ: หัวข้อทองเหลือ 22px (ไม่นับเป็นตัวใหญ่) และวางบนพื้นกระดาษ → ใช้ทองหมึกให้ผ่าน 4.5:1 */
 @media (max-width: 860px) {
   .hero-gold { color: var(--gold-dark); }
+}
+
+/* ==========================================================================
+   Touch adaptation — นิ้วกดได้ทุกปุ่ม (พื้นที่กด ≥ 44px)
+   ใช้กับจอสัมผัสทุกขนาด + จอแคบ · ลิงก์ข้อความขยายพื้นที่กดด้วย ::after ที่มองไม่เห็น
+   หน้าตาและระยะห่างเดิมจึงไม่ขยับ
+   ========================================================================== */
+@media (pointer: coarse), (max-width: 860px) {
+  /* แถบบน */
+  .mobile-nav-wrap { gap: 4px; }
+  .mobile-stylist-btn { min-height: 44px; padding: 0 8px; }
+  .mobile-menu-btn { width: 44px; height: 44px; margin-right: -8px; }
+  .brand { min-height: 44px; align-items: center; }
+
+  /* ฟอร์ม: 16px กัน iOS ซูมหน้าเองตอนแตะช่องกรอก */
+  .input-wrap input { font-size: 16px; }
+  .gender button { min-height: 44px; }
+  .consent input[type="checkbox"] { width: 22px; height: 22px; }
+
+  /* ภาพถ่าย: ปุ่มเลือก/เปลี่ยน/นำออก เป็นปุ่มเต็มนิ้ว */
+  .photo-card label {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 16px;
+    font-size: 13px;
+  }
+  .remove-photo-btn,
+  .photo-card button {
+    min-height: 44px;
+    margin-top: 0;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  /* ลิงก์ข้อความ + ปุ่ม ? : ขยายพื้นที่กดโดยไม่เปลี่ยนหน้าตา */
+  .inline-help-btn,
+  .guide-learn-more,
+  .btn-utility-link,
+  .text-button,
+  .edit-link,
+  .inline-link,
+  .picks-all,
+  .footer-inner button {
+    position: relative;
+  }
+  .inline-help-btn::after,
+  .guide-learn-more::after,
+  .btn-utility-link::after,
+  .text-button::after,
+  .edit-link::after,
+  .inline-link::after,
+  .picks-all::after,
+  .footer-inner button::after {
+    content: '';
+    position: absolute;
+    inset: -13px -8px;
+  }
+  .inline-help-btn::after { inset: -14px; }
+  /* "เริ่มใหม่" อยู่ชิดใต้ปุ่มปรึกษาเรา — ขยายลงล่างแทน ไม่ให้พื้นที่กดเกยกัน */
+  .result-actions .text-button::after { inset: -9px -8px -17px; }
+}
+
+/* จอสัมผัสไม่มี hover: ไม่ให้การ์ดสินค้าค้างท่ายกหลังแตะ ใช้จังหวะกดแทน */
+@media (hover: none) {
+  .pick-card:hover { transform: none; box-shadow: none; border-color: var(--border-subtle); }
+  .pick-card:hover .pick-photo img { transform: none; }
+  .pick-card:active { border-color: var(--gold-primary); }
 }
