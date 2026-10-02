@@ -11,15 +11,25 @@
   --bg-accent-light: #FBF8F2;
   
   --ink-primary: #151615;
-  --ink-secondary: #63666A;
-  --ink-muted: #8E9094;
+  /* หมึกรองอมน้ำเงินผ้าสูทเล็กน้อย — ผ่าน 4.5:1 บนกระดาษทุกเฉด (เดิม #8E9094 ได้แค่ 2.9–3.2) */
+  --ink-secondary: #59606E;
+  --ink-muted: #666C78;
   
+  /* ทอง 3 ระดับตามหน้าที่: พื้น/เส้น · เครื่องหมาย (ไอคอน ≥3:1) · ตัวหนังสือ (≥4.5:1) */
   --gold-primary: #C3933E;
-  --gold-dark: #A5782B;
+  --gold-mark: #A5782B;
+  --gold-dark: #86621F;
   --gold-light: #F4EEDB;
   --gold-glow: rgba(195, 147, 62, 0.28);
   
   --border-subtle: #EAE7E1;
+
+  /* สถานะ */
+  --danger: #B5372A;
+  --danger-ink: #9E3226;
+  --danger-bg: #FDF6F5;
+  --danger-line: #F0D4D0;
+  --success: #2E7D32;
   --border-focus: #C3933E;
   --radius-card: 18px;
   --radius-inner: 10px;
@@ -138,7 +148,7 @@ header {
 }
 
 .icon-chat {
-  color: var(--gold-primary);
+  color: var(--gold-mark);
 }
 
 .nav-divider {
@@ -163,7 +173,7 @@ header {
 }
 
 .mobile-stylist-btn svg {
-  color: var(--gold-primary);
+  color: var(--gold-mark);
 }
 
 .mobile-menu-btn {
@@ -247,7 +257,7 @@ main {
   display: block;
   font-size: 28px;
   font-weight: 600;
-  color: var(--gold-primary);
+  color: var(--gold-mark);
   margin-top: 6px;
   letter-spacing: -0.3px;
 }
@@ -295,7 +305,8 @@ main {
   font-size: 11px;
   letter-spacing: 2px;
   color: rgba(255, 255, 255, 0.92);
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+  /* จอแคบข้อความจะไปตกบนผนังสีอ่อน — เงา navy สองชั้นพยุงให้อ่านได้ทั้งบนสูทและบนผนัง */
+  text-shadow: 0 1px 2px rgba(19, 26, 40, 0.65), 0 0 14px rgba(19, 26, 40, 0.55);
   font-weight: 500;
 }
 
@@ -354,9 +365,9 @@ main {
   margin: 0 0 14px;
   padding: 12px 14px;
   border-radius: var(--radius-inner);
-  background: #FDF6F5;
-  border: 1px solid #F0D4D0;
-  color: #9E3226;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-line);
+  color: var(--danger-ink);
   font-size: 13px;
   line-height: 1.6;
 }
@@ -409,8 +420,8 @@ main {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: #EFEFEF;
-  color: #777;
+  background: #EFEDE8;
+  color: var(--ink-secondary);
   font-size: 12px;
   font-weight: 500;
   display: grid;
@@ -425,7 +436,7 @@ main {
 
 .mob-dot.complete {
   background: var(--gold-light);
-  color: var(--gold-primary);
+  color: var(--gold-dark);
 }
 
 .mob-line {
@@ -523,7 +534,7 @@ main {
 
 .step.complete b {
   background: var(--gold-light);
-  color: var(--gold-primary);
+  color: var(--gold-dark);
 }
 
 .step:disabled {
@@ -639,8 +650,8 @@ main {
 }
 
 .inline-help-btn:hover {
-  border-color: var(--gold-primary);
-  color: var(--gold-primary);
+  border-color: var(--gold-mark);
+  color: var(--gold-dark);
 }
 
 .hint {
@@ -886,7 +897,7 @@ main {
   position: relative;
   display: grid;
   place-items: center;
-  color: var(--gold-primary);
+  color: var(--gold-mark);
   background: #F4F1EA;
   border-radius: 8px;
   margin-bottom: 10px;
@@ -930,7 +941,7 @@ main {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  color: #9C988F;
+  color: var(--ink-muted);
 }
 
 .photo-placeholder .ph-icon {
@@ -942,7 +953,7 @@ main {
 }
 
 .check-mark-text {
-  color: #2E7D32;
+  color: var(--success);
   margin-left: 4px;
   font-weight: bold;
 }
@@ -981,7 +992,7 @@ main {
 .photo-card button {
   margin-top: 6px;
   font-size: 11px;
-  color: #A33;
+  color: var(--danger-ink);
   text-decoration: underline;
 }
 
@@ -993,7 +1004,7 @@ main {
 }
 
 .error {
-  color: #C0392B;
+  color: var(--danger);
   font-size: 13px;
   margin: 12px 0 0;
 }
@@ -1254,7 +1265,7 @@ main {
 .card-head h3 .ic {
   width: 28px;
   height: 28px;
-  color: var(--gold-primary);
+  color: var(--gold-mark);
 }
 
 .edit-link {
@@ -1358,7 +1369,7 @@ main {
   padding: 12px 16px;
   font-size: 14px;
   line-height: 1.5;
-  color: #8A6A2E;
+  color: var(--gold-dark);
   margin-bottom: 18px;
 }
 
@@ -1366,7 +1377,7 @@ main {
   flex-shrink: 0;
   width: 22px;
   height: 22px;
-  color: var(--gold-primary);
+  color: var(--gold-mark);
 }
 
 .result-actions {
@@ -1971,7 +1982,7 @@ html {
 }
 
 .photo-card.photo-failed:hover {
-  border-color: #C0392B;
+  border-color: var(--danger);
 }
 
 @keyframes photo-in {
@@ -2544,11 +2555,11 @@ header {
   border-radius: var(--radius-inner);
   border: 1px dashed var(--gold-primary);
   background: var(--gold-light);
-  color: #6B4E17;
+  color: var(--gold-dark);
   font-size: 13.5px;
   line-height: 1.6;
 }
-.preview-banner b { color: #4A3610; }
+.preview-banner b { color: var(--ink-primary); }
 @media print { .preview-banner { border-style: solid; } }
 
 /* ── สูทแนะนำ: การ์ด ── */
@@ -2652,4 +2663,27 @@ header {
 @media (prefers-reduced-motion: reduce) {
   .pick-card, .pick-photo img { transition: none; }
   .pick-card:hover, .pick-card:hover .pick-photo img { transform: none; }
+}
+
+/* ── พื้นผิวที่เบราว์เซอร์วาดเอง ให้ใช้สีของตั๋วช่างตัด ── */
+::selection {
+  background: var(--gold-light);
+  color: var(--navy);
+}
+
+input, textarea {
+  caret-color: var(--gold-dark);
+}
+
+input[type="checkbox"], input[type="radio"] {
+  accent-color: var(--gold-mark);
+}
+
+html {
+  scrollbar-color: var(--stitch) var(--bg-page);
+}
+
+/* มือถือ: หัวข้อทองเหลือ 22px (ไม่นับเป็นตัวใหญ่) และวางบนพื้นกระดาษ → ใช้ทองหมึกให้ผ่าน 4.5:1 */
+@media (max-width: 860px) {
+  .hero-gold { color: var(--gold-dark); }
 }
