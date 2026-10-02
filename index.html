@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <a class="skip-link" href="#surface">ข้ามไปยังแบบฟอร์มวัดตัว</a>
   <!-- Global Header -->
   <header>
     <div class="header-inner">
@@ -83,18 +84,19 @@
 
     <!-- เนื้อหาที่เหลือล็อกความกว้างไว้ ส่วน hero ด้านบนกว้างเต็มจอ -->
     <div class="main-inner">
+    <noscript><p class="noscript-note">หน้านี้ต้องใช้ JavaScript ในการวัดตัว กรุณาเปิด JavaScript ในเบราว์เซอร์แล้วโหลดหน้าใหม่</p></noscript>
 
     <!-- Mobile Horizontal Stepper Indicator -->
     <div class="mobile-stepper" id="mobile-stepper">
       <div class="mobile-step-label">ขั้นตอน <span id="mobile-step-num">1</span> จาก 4</div>
       <div class="mobile-step-dots">
-        <div class="mob-dot active" data-step="0">1</div>
+        <button type="button" class="mob-dot active" data-step="0" aria-label="ขั้นตอน 1 ข้อมูลเบื้องต้น">1</button>
         <div class="mob-line"></div>
-        <div class="mob-dot" data-step="1">2</div>
+        <button type="button" class="mob-dot" data-step="1" aria-label="ขั้นตอน 2 ภาพถ่าย" disabled>2</button>
         <div class="mob-line"></div>
-        <div class="mob-dot" data-step="2">3</div>
+        <button type="button" class="mob-dot" data-step="2" aria-label="ขั้นตอน 3 ตรวจสอบ" disabled>3</button>
         <div class="mob-line"></div>
-        <div class="mob-dot" data-step="3">4</div>
+        <button type="button" class="mob-dot" data-step="3" aria-label="ขั้นตอน 4 ผลประเมิน" disabled>4</button>
       </div>
     </div>
 
@@ -106,12 +108,12 @@
         <aside class="steps-column" id="steps" aria-label="ขั้นตอน"></aside>
 
         <!-- Center: Dynamic Interactive Surface -->
-        <div class="surface-column" id="surface" aria-live="polite"></div>
+        <div class="surface-column" id="surface" tabindex="-1"></div>
 
         <!-- Right: Preparation Guide Column -->
         <aside class="guide-column" id="guide-column">
           <!-- Accordion Toggle for Mobile -->
-          <div class="guide-accordion-header" id="guide-accordion-toggle" role="button" tabindex="0" aria-expanded="false">
+          <div class="guide-accordion-header" id="guide-accordion-toggle" role="button" tabindex="0" aria-expanded="false" aria-controls="guide-box">
             <div class="guide-acc-text">
               <span class="guide-acc-title">เตรียมข้อมูลให้พร้อม</span>
               <span class="guide-acc-summary">ข้อมูลสัดส่วน ภาพถ่ายตามคำแนะนำในพื้นที่สว่าง</span>
@@ -122,7 +124,7 @@
           </div>
 
           <!-- Guide Content -->
-          <div class="guide-box" id="guide-box" role="img" aria-label="พื้นหลังผ้าสูท เทปวัดตัว และภาพสเก็ตช์แนวทางถ่ายภาพ">
+          <div class="guide-box" id="guide-box">
             <div class="guide-overlay">
               <h2 class="guide-title">เตรียมข้อมูลให้พร้อม</h2>
 
@@ -187,6 +189,9 @@
       <ul class="picks-grid" id="picks-grid"></ul>
     </section>
   </main>
+
+  <!-- ประกาศสั้นๆ ให้ screen reader (เพิ่ม/นำภาพออก) -->
+  <p class="sr-only" id="live" role="status"></p>
 
   <!-- Global Footer -->
   <footer>

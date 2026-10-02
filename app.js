@@ -76,10 +76,14 @@ async function transition(renderFn, dir = 1) {
   const h0 = surface.offsetHeight;
   if (canAnimate && hadContent) {
     try {
-      await surface.animate(
-        [{ opacity: 1, transform: 'translateX(0)' }, { opacity: 0, transform: `translateX(${dir * -10}px)` }],
-        { duration: 150, easing: 'ease-in', fill: 'forwards' }
-      ).finished;
+      // แท็บที่ถูกซ่อน animation จะไม่เดิน — แข่งกับ timer กันค้าง (เช่น ผลกลับมาตอนผู้ใช้สลับแท็บ)
+      await Promise.race([
+        surface.animate(
+          [{ opacity: 1, transform: 'translateX(0)' }, { opacity: 0, transform: `translateX(${dir * -10}px)` }],
+          { duration: 150, easing: 'ease-in', fill: 'forwards' }
+        ).finished,
+        new Promise(ok => setTimeout(ok, 400))
+      ]);
     } catch { /* ถูกยกเลิกเพราะมีการเปลี่ยนขั้นซ้อน — ปล่อยให้รอบใหม่จัดการ */ }
   }
   if (token !== navToken) return false;
@@ -195,19 +199,63 @@ async function go(n) {
   scrollToWorkspace();
 }
 
-function field(key, title, unit, min, max, disabled = false) {
+// ช่วงค่าที่รับ (ตรงกับที่ API ตรวจ) — ใช้ทั้งวาดช่องกรอกและตรวจค่า
+const FIELD_RULES = {
+  height: ['ส่วนสูง', 'cm', 100, 230],
+  weight: ['น้ำหนัก', 'kg', 25, 250],
+  waist: ['รอบเอวกางเกง', 'นิ้ว', 20, 70],
+  chest: ['รอบอก', 'นิ้ว', 20, 70],
+  hip: ['รอบสะโพก', 'นิ้ว', 20, 80]
+};
+
+function field(key, disabled = false) {
+  const [title, unit, min, max] = FIELD_RULES[key];
   const isWaist = key === 'waist';
   return `
     <div class="field">
       <label for="${key}">${title}</label>
       <div class="input-wrap">
-        <input id="${key}" name="${key}" type="number" inputmode="decimal" step="any" min="${min}" max="${max}" required ${disabled ? 'disabled' : ''} value="${escapeText(state.values[key])}" autocomplete="off">
+        <input id="${key}" name="${key}" type="number" inputmode="decimal" step="any" min="${min}" max="${max}" required ${disabled ? 'disabled' : ''} value="${escapeText(state.values[key])}" autocomplete="off" aria-describedby="${isWaist ? 'waist-hint ' : ''}${key}-error">
         <span class="unit-tag">${unit}</span>
         ${isWaist ? '<button type="button" class="inline-help-btn" data-help="waist" aria-label="วิธีดูรอบเอวกางเกง">?</button>' : ''}
       </div>
-      ${isWaist ? '<p class="hint">ใช้ขนาดเอวกางเกงที่คุณใส่</p>' : ''}
+      ${isWaist ? '<p class="hint" id="waist-hint">ใช้ขนาดเอวกางเกงที่คุณใส่</p>' : ''}
+      <p class="field-error" id="${key}-error" hidden></p>
     </div>
   `;
+}
+
+// ข้อความ error ของช่องกรอก (คืน '' ถ้าค่าถูกต้อง) — บอกปัญหาและวิธีแก้เป็นภาษาไทย แทนกล่องของเบราว์เซอร์
+function fieldMessage(input) {
+  const [title, unit, min, max] = FIELD_RULES[input.name];
+  if (input.validity.badInput) return `กรุณากรอก${title}เป็นตัวเลข`;
+  const raw = input.value.trim();
+  if (!raw) return `กรุณากรอก${title}`;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return `กรุณากรอก${title}เป็นตัวเลข`;
+  if (n < min || n > max) {
+    // กรอกเป็นเซนติเมตรแทนนิ้ว เป็นความผิดพลาดที่เจอบ่อย
+    const cmHint = unit === 'นิ้ว' && n > max ? ' — ถ้าวัดเป็นเซนติเมตร ให้หารด้วย 2.54' : '';
+    return `${title}ควรอยู่ระหว่าง ${min}–${max} ${unit}${cmHint}`;
+  }
+  return '';
+}
+
+function validateField(input) {
+  const msg = fieldMessage(input);
+  const el = document.querySelector(`#${input.name}-error`);
+  input.setAttribute('aria-invalid', msg ? 'true' : 'false');
+  input.closest('.input-wrap')?.classList.toggle('invalid', !!msg);
+  if (el) { el.textContent = msg; el.hidden = !msg; }
+  return !msg;
+}
+
+// ประกาศสั้นๆ ให้ screen reader โดยไม่ย้ายโฟกัส
+function announce(text) {
+  const live = document.querySelector('#live');
+  if (!live) return;
+  live.textContent = '';
+  setTimeout(() => { live.textContent = text; }, 50);
 }
 
 let stepperKey = '';
@@ -232,7 +280,8 @@ function renderStepper(force = false) {
   document.querySelectorAll('.mob-dot').forEach((dot, idx) => {
     dot.classList.toggle('active', idx === state.step);
     dot.classList.toggle('complete', idx < state.step);
-    dot.style.cursor = idx <= state.max ? 'pointer' : 'default';
+    dot.disabled = idx > state.max || state.busy;
+    if (idx === state.step) dot.setAttribute('aria-current', 'step'); else dot.removeAttribute('aria-current');
   });
 }
 
@@ -256,14 +305,14 @@ function render() {
         <button type="button" data-gender="male" class="${state.gender === 'male' ? 'selected' : ''}" aria-pressed="${state.gender === 'male'}">สูทผู้ชาย</button>
         <button type="button" data-gender="female" class="${state.gender === 'female' ? 'selected' : ''}" aria-pressed="${state.gender === 'female'}">สูทผู้หญิง</button>
       </div>
-      <form id="basics">
-        ${field('height', 'ส่วนสูง', 'cm', 100, 230)}
-        ${field('weight', 'น้ำหนัก', 'kg', 25, 250)}
-        ${field('waist', 'รอบเอวกางเกง', 'นิ้ว', 20, 70)}
+      <form id="basics" novalidate>
+        ${field('height')}
+        ${field('weight')}
+        ${field('waist')}
         <div class="female-fields ${state.gender === 'female' ? 'open' : ''}">
           <div class="female-fields-inner">
-            ${field('chest', 'รอบอก', 'นิ้ว', 20, 70, state.gender !== 'female')}
-            ${field('hip', 'รอบสะโพก', 'นิ้ว', 20, 80, state.gender !== 'female')}
+            ${field('chest', state.gender !== 'female')}
+            ${field('hip', state.gender !== 'female')}
           </div>
         </div>
         <div class="actions">
@@ -443,13 +492,24 @@ function render() {
 }
 
 function bind() {
-  document.querySelector('#basics')?.addEventListener('input', e => {
+  const basics = document.querySelector('#basics');
+  basics?.addEventListener('input', e => {
     if (e.target.name) {
       state.values[e.target.name] = e.target.value;
       state.max = 0;
       state.result = null;
+      // ช่องที่ขึ้น error อยู่: ตรวจใหม่ทุกครั้งที่พิมพ์ ให้ข้อความหายทันทีที่ค่าถูก
+      if (e.target.getAttribute('aria-invalid') === 'true') validateField(e.target);
     }
   });
+  // ออกจากช่องแล้วค่อยเตือน (ไม่เตือนช่องที่ยังว่าง — รอตอนกดถัดไป)
+  basics?.addEventListener('focusout', e => {
+    if (e.target.name && (e.target.value || e.target.validity.badInput)) validateField(e.target);
+  });
+  // หมุนล้อเมาส์บนช่องตัวเลขจะเปลี่ยนค่าโดยไม่ตั้งใจ
+  basics?.addEventListener('wheel', e => {
+    if (e.target.type === 'number' && document.activeElement === e.target) e.target.blur();
+  }, { passive: true });
 
   document.querySelector('#consent')?.addEventListener('change', e => {
     state.consent = e.target.checked;
@@ -457,13 +517,19 @@ function bind() {
     if (btn) btn.disabled = !state.consent;
   });
 
-  document.querySelector('#basics')?.addEventListener('submit', e => {
+  basics?.addEventListener('submit', e => {
     e.preventDefault();
+    const inputs = [...basics.querySelectorAll('input[name]:not(:disabled)')];
+    const bad = inputs.filter(inp => !validateField(inp));
+    if (bad.length) return bad[0].focus();
     go(1);
   });
 
   document.querySelectorAll('[data-photo]').forEach(el => {
-    el.addEventListener('change', () => loadPhoto(Number(el.dataset.photo), el.files[0]));
+    el.addEventListener('change', async () => {
+      await loadPhoto(Number(el.dataset.photo), el.files[0]);
+      el.value = ''; // เลือกไฟล์เดิมซ้ำหลัง error ได้ (ไม่งั้น change ไม่ยิง)
+    });
   });
 
   document.querySelector('#photos-next')?.addEventListener('click', () => {
@@ -548,7 +614,14 @@ async function submitPrediction() {
 
   let res, body;
   try {
-    const signal = AbortSignal.timeout ? AbortSignal.timeout(REQUEST_TIMEOUT_MS) : undefined;
+    let signal;
+    if (AbortSignal.timeout) signal = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+    else {
+      // Safari < 16 ไม่มี AbortSignal.timeout — ตั้ง timer เองไม่งั้นค้างหน้าโหลดไม่มีกำหนด
+      const ctl = new AbortController();
+      setTimeout(() => ctl.abort(), REQUEST_TIMEOUT_MS);
+      signal = ctl.signal;
+    }
     res = await fetch(`${API_BASE}/predict/suit/from-photos`, { method: 'POST', body: fd, signal });
     body = await res.json().catch(() => ({}));
   } catch (e) {
@@ -556,7 +629,9 @@ async function submitPrediction() {
     go(2);
     return error(e?.name === 'TimeoutError' || e?.name === 'AbortError'
       ? 'ระบบใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง'
-      : 'เชื่อมต่อระบบประเมินไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่');
+      : navigator.onLine === false
+        ? 'อุปกรณ์ไม่ได้เชื่อมต่ออินเทอร์เน็ต ข้อมูลและภาพยังอยู่ครบ — เชื่อมต่อแล้วกดส่งอีกครั้งได้เลย'
+        : 'เชื่อมต่อระบบประเมินไม่ได้ ข้อมูลและภาพยังอยู่ครบ — กรุณาตรวจสอบอินเทอร์เน็ตแล้วกดส่งอีกครั้ง');
   }
   state.busy = false;
 
@@ -663,6 +738,7 @@ async function loadPhoto(i, file) {
   state.justAdded = i;
   render();
   state.justAdded = null;
+  announce(`เพิ่มภาพ${angles[i]}แล้ว ${state.photos.filter(Boolean).length} จาก 4 ภาพ`);
 }
 
 function reset() {
@@ -732,7 +808,9 @@ function showHelp(key) {
   const h = help[key];
   if (!h) return;
   document.querySelector('#dialog-content').innerHTML = `<h2>${h[0]}</h2>${h[1]}`;
-  document.querySelector('#dialog').showModal();
+  const d = document.querySelector('#dialog');
+  d.classList.remove('is-closing');
+  if (!d.open) d.showModal(); // showModal ซ้ำบน dialog ที่เปิดอยู่จะ throw
   document.querySelector('#confirm-reset')?.addEventListener('click', reset);
 }
 
@@ -784,6 +862,8 @@ document.addEventListener('click', e => {
     state.result = null;
     state.max = 1;
     render();
+    announce(`นำภาพ${angles[i]}ออกแล้ว`);
+    document.querySelector(`#photo${i}`)?.focus(); // ปุ่มที่กดหายไปแล้ว — คืนโฟกัสไว้ที่ช่องเลือกภาพของมุมเดิม
   }
 });
 
@@ -793,12 +873,24 @@ if (accToggle) {
   accToggle.addEventListener('keydown', e => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); accToggle.click(); }
   });
+  const guideCol = document.querySelector('#guide-column');
+  const guideBox = document.querySelector('#guide-box');
+  const narrow = window.matchMedia('(max-width: 860px)');
+  // จอแคบ + พับอยู่ → เนื้อหาถูกซ่อนด้วยความสูง 0 แต่ยัง Tab ถึง ต้องปิดด้วย inert
+  const syncGuide = () => { guideBox.inert = narrow.matches && !guideCol.classList.contains('accordion-open'); };
   accToggle.addEventListener('click', () => {
-    const col = document.querySelector('#guide-column');
-    const isExp = col.classList.toggle('accordion-open');
+    const isExp = guideCol.classList.toggle('accordion-open');
     accToggle.setAttribute('aria-expanded', isExp);
+    syncGuide();
   });
+  narrow.addEventListener?.('change', syncGuide);
+  syncGuide();
 }
+
+// กันปิด/รีเฟรชหน้าโดยไม่ตั้งใจหลังเลือกภาพแล้ว (ภาพอยู่ในหน่วยความจำของหน้า หายแล้วต้องเลือกใหม่ทั้งหมด)
+window.addEventListener('beforeunload', e => {
+  if (state.photos.some(Boolean) && !state.result) e.preventDefault();
+});
 
 // Mobile Stepper Dot Clicks
 document.querySelectorAll('.mob-dot').forEach(dot => {
@@ -814,7 +906,16 @@ function closeDialog() {
   if (!d?.open) return;
   if (reduceMotion()) return d.close();
   d.classList.add('is-closing');
-  d.addEventListener('animationend', () => { d.classList.remove('is-closing'); d.close(); }, { once: true });
+  let done = false;
+  const finish = () => {
+    if (done) return;
+    done = true;
+    if (!d.classList.contains('is-closing')) return; // ถูกเปิดใหม่ระหว่างกำลังปิด
+    d.classList.remove('is-closing');
+    d.close();
+  };
+  d.addEventListener('animationend', finish, { once: true });
+  setTimeout(finish, 400); // แท็บถูกซ่อน/animation ไม่ยิง ก็ยังปิดได้
 }
 document.querySelector('#close-dialog')?.addEventListener('click', closeDialog);
 document.querySelector('#dialog')?.addEventListener('cancel', e => { e.preventDefault(); closeDialog(); });

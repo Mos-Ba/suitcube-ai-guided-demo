@@ -2322,7 +2322,7 @@ header {
 
 .mob-dot.complete {
   background: var(--gold-primary);
-  color: #FFFFFF;
+  color: var(--navy); /* ขาวบนทองได้แค่ 2.8:1 — navy ได้ 5.5:1 */
   box-shadow: none;
 }
 
@@ -2755,4 +2755,94 @@ html {
   .pick-card:hover { transform: none; box-shadow: none; border-color: var(--border-subtle); }
   .pick-card:hover .pick-photo img { transform: none; }
   .pick-card:active { border-color: var(--gold-primary); }
+}
+
+/* ==========================================================================
+   Hardening — error ระดับช่องกรอก · screen reader · คีย์บอร์ด
+   ========================================================================== */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ลิงก์ข้าม: ซ่อนไว้จนกว่าจะ Tab มาถึง */
+.skip-link {
+  position: absolute;
+  left: 16px;
+  top: -60px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: var(--radius-inner);
+  background: var(--navy);
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: top var(--dur-fast) ease;
+}
+.skip-link:focus { top: 12px; }
+
+#surface:focus { outline: none; }
+
+.noscript-note {
+  margin: 24px 0;
+  padding: 14px 16px;
+  border-radius: var(--radius-inner);
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-line);
+  color: var(--danger-ink);
+  font-size: 14px;
+}
+
+/* error ใต้ช่องกรอก: บอกทั้งด้วยสี ขอบ และข้อความ (ไม่พึ่งสีอย่างเดียว) */
+.field-error {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--danger);
+}
+.field-error::before {
+  content: '!';
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: 1px;
+}
+.input-wrap.invalid,
+.input-wrap.invalid:focus-within {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(181, 55, 42, 0.12);
+}
+
+/* stepper มือถือเป็นปุ่มจริง: กดได้ด้วยคีย์บอร์ด + พื้นที่กด 44px */
+.mob-dot {
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.mob-dot:disabled { cursor: default; }
+.mob-dot::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
+
+/* ข้อความยาวจาก API (คำเตือน/ข้อผิดพลาด) ตัดบรรทัดได้ ไม่ดันการ์ดล้น */
+.error,
+.result-notes li,
+.result-alert,
+.field-error {
+  overflow-wrap: anywhere;
 }
