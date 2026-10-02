@@ -209,53 +209,70 @@
    ========================================================================== */
 
 :root {
+  /* ── ฟอนต์ ── */
   --font-main: 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --bg-page: #F6F5F1;
-  --bg-card: #FFFFFF;
+  --font-display: var(--font-main); /* CI ใช้ Prompt ทั้งหมด (ตามเว็บ suitcube.com) */
+
+  /* ── พื้นผิว (จากสว่างไปเข้ม) ── */
+  --bg-card: #FFFFFF;            /* การ์ด ปุ่มรอง ช่องกรอก */
+  --paper: #FCFBF7;              /* กระดาษตั๋ว */
   --bg-accent-light: #FBF8F2;
-  
-  /* หมึกรองอมน้ำเงินผ้าสูทเล็กน้อย — ผ่าน 4.5:1 บนกระดาษทุกเฉด (เดิม #8E9094 ได้แค่ 2.9–3.2) */
+  --surface-subtle: #FAF9F6;     /* คอลัมน์ข้าง แถบล่างการ์ด */
+  --bg-page: #F6F5F1;            /* พื้นหลังหน้า */
+  --surface-hover: #F6F5F1;      /* ปุ่มรองตอนชี้ */
+  --well: #F4F1EA;               /* ช่องที่บุ๋มลง: แถบเลือกเพศ กรอบรูป สายวัด */
+  --well-deep: #ECE8DF;          /* พื้นหลังรูปก่อนโหลด */
+  --navy: #1C2638;                /* ผ้าสูท: ปุ่มหลัก การ์ดไซส์ */
+  --navy-deep: #131A28;
+
+  /* ── ตัวหนังสือ ── */
+  --ink-primary: #1A2130;         /* navy เข้ม */
+  /* หมึกรองอมน้ำเงินผ้าสูทเล็กน้อย — ผ่าน 4.5:1 บนกระดาษทุกเฉด */
   --ink-secondary: #59606E;
   --ink-muted: #666C78;
-  
-  /* ทอง 3 ระดับตามหน้าที่: พื้น/เส้น · เครื่องหมาย (ไอคอน ≥3:1) · ตัวหนังสือ (≥4.5:1) */
+  --on-dark: #FFFFFF;            /* ตัวหนังสือ/ไอคอนบนพื้น navy ทอง แดง */
+
+  /* ── ทอง 3 ระดับตามหน้าที่: พื้น/เส้น · เครื่องหมาย (ไอคอน ≥3:1) · ตัวหนังสือ (≥4.5:1) ── */
   --gold-primary: #C3933E;
   --gold-mark: #A5782B;
   --gold-dark: #86621F;
   --gold-light: #F4EEDB;
   --gold-glow: rgba(195, 147, 62, 0.28);
-  
-  --border-subtle: #EAE7E1;
+  --thread: #D4B06A;             /* ด้ายทองบนพื้น navy (สว่างกว่าทองหลัก) */
+  --thread-soft: #B99C5F;        /* ขีดบนสายวัดของตั๋ว */
 
-  /* สถานะ */
+  /* ── เส้น ── */
+  --border-subtle: #EAE7E1;      /* ขอบการ์ด เส้นแบ่งบาง */
+  --border-control: #DCD7CE;     /* ขอบช่องกรอก/ปุ่มเลือกไฟล์ */
+  --border-strong: #C8C5BD;      /* ขอบปุ่มช่วยเหลือ */
+  --paper-line: #E6E0D2;         /* เส้นบรรทัดบนกระดาษ */
+  --stitch: #D9D0BC;             /* รอยเย็บบนพื้นอ่อน */
+  --gold-line: #E3D2AC;          /* เส้นประอมทอง */
+  --gold-line-strong: #D9C9A6;
+
+  /* ── สถานะ ── */
   --danger: #B5372A;
   --danger-ink: #9E3226;
   --danger-bg: #FDF6F5;
   --danger-line: #F0D4D0;
   --success: #2E7D32;
+
+  /* ── รูปทรง เงา ระยะ ── */
   --radius-card: 18px;
   --radius-inner: 10px;
   --radius-pill: 9999px;
-  
   --shadow-soft: 0 10px 32px rgba(25, 26, 25, 0.04);
   --shadow-card: 0 14px 44px rgba(20, 22, 20, 0.06);
-
   /* ระยะที่การ์ดขั้นตอนขยับขึ้นไปทับรูป hero (ใช้ร่วมกับตำแหน่งป้ายใน hero) */
   --hero-overlap: 200px;
+
+  /* ── จังหวะการเคลื่อนไหว ── */
   --ease-out: cubic-bezier(.22, .61, .36, 1);
   --ease-in: cubic-bezier(.4, 0, 1, 1);
   --ease-spring: cubic-bezier(.34, 1.3, .64, 1);
   --dur-fast: 150ms;
   --dur-base: 320ms;
   --dur-slow: 450ms;
-  --font-display: var(--font-main); /* CI ใช้ Prompt ทั้งหมด (ตามเว็บ suitcube.com) */
-  --navy: #1C2638;
-  --navy-deep: #131A28;
-  --thread: #D4B06A;          /* ด้ายทองบนพื้น navy (สว่างกว่าทองหลัก) */
-  --paper: #FCFBF7;           /* กระดาษตั๋ว */
-  --paper-line: #E6E0D2;      /* เส้นบรรทัดบนกระดาษ */
-  --stitch: #D9D0BC;          /* รอยเย็บบนพื้นอ่อน */
-  --ink-primary: #1A2130;     /* ตัวหนังสือหลัก = navy เข้ม (เดิมดำสนิท) */
 }
 
 *, *::before, *::after {
@@ -298,7 +315,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
    Header Navigation
    ========================================================================== */
 header {
-  background: #FFFFFF;
+  background: var(--bg-card);
   border-bottom: 1px solid var(--border-subtle);
   position: sticky;
   top: 0;
@@ -491,7 +508,7 @@ main {
   z-index: 1;
   top: 28px;
   right: var(--hero-gutter);
-  color: #FFFFFF;
+  color: var(--on-dark);
   display: flex;
   flex-direction: column;
   line-height: 1.2;
@@ -563,16 +580,16 @@ main {
 }
 
 .photo-card.photo-failed {
-  border: 1.5px solid #C0392B;
-  background: #FDF6F5;
+  border: 1.5px solid var(--danger);
+  background: var(--danger-bg);
 }
 
 .retake-badge {
   position: absolute;
   top: 6px;
   right: 6px;
-  background: #C0392B;
-  color: #FFFFFF;
+  background: var(--danger);
+  color: var(--on-dark);
   font-size: 11px;
   font-weight: 500;
   padding: 2px 8px;
@@ -614,7 +631,7 @@ main {
    ========================================================================== */
 .mobile-stepper {
   display: none;
-  background: #FFFFFF;
+  background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: 14px;
   padding: 16px 20px;
@@ -643,7 +660,7 @@ main {
   display: grid;
   place-items: center;
   transition: background var(--dur-base) var(--ease-out), color var(--dur-base), box-shadow var(--dur-base);
-  background: #FFFFFF;
+  background: var(--bg-card);
   box-shadow: inset 0 0 0 1.5px var(--stitch);
   color: var(--ink-muted);
   /* stepper มือถือเป็นปุ่มจริง: กดได้ด้วยคีย์บอร์ด + พื้นที่กด 44px */
@@ -767,8 +784,8 @@ main {
 .gender {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: #F3F2EE;
-  border: 1px solid #E4E2DC;
+  background: var(--well);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
   padding: 4px;
   margin: 18px 0 24px;
@@ -787,7 +804,7 @@ main {
 }
 
 .gender button.selected {
-  color: #FFFFFF;
+  color: var(--on-dark);
   font-weight: 500;
   background: transparent;
   box-shadow: none;
@@ -809,9 +826,9 @@ main {
 .input-wrap {
   display: flex;
   align-items: center;
-  border: 1px solid #DCDAD4;
+  border: 1px solid var(--border-control);
   border-radius: 8px;
-  background: #FFFFFF;
+  background: var(--bg-card);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -845,8 +862,8 @@ main {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  border: 1px solid #C8C5BD;
-  background: #F8F7F4;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-subtle);
   color: var(--ink-secondary);
   font-size: 11px;
   font-weight: 600;
@@ -874,7 +891,7 @@ main {
 }
 
 .primary {
-  color: #FFFFFF;
+  color: var(--on-dark);
   border: 1px solid var(--ink-primary);
   border-radius: 8px;
   padding: 14px 24px;
@@ -890,10 +907,6 @@ main {
   border-color: var(--navy);
 }
 
-.primary:hover {
-  background: #2E302E;
-}
-
 .primary:active {
   transform: translateY(1px);
 }
@@ -906,7 +919,7 @@ main {
 
 .secondary {
   border: 1px solid var(--border-subtle);
-  background: #FFFFFF;
+  background: var(--bg-card);
   border-radius: 8px;
   padding: 13px 20px;
   font-size: 14px;
@@ -915,7 +928,7 @@ main {
 }
 
 .secondary:hover {
-  background: #F6F5F2;
+  background: var(--surface-hover);
 }
 
 .form-foot {
@@ -927,7 +940,7 @@ main {
 
 /* Right: Guide Column */
 .guide-column {
-  background: #FAF9F6;
+  background: var(--surface-subtle);
   border-left: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
@@ -938,7 +951,7 @@ main {
   align-items: center;
   justify-content: space-between;
   padding: 18px 20px;
-  background: #FAF9F6;
+  background: var(--surface-subtle);
   border-top: 1px solid var(--border-subtle);
   cursor: pointer;
 }
@@ -971,7 +984,7 @@ main {
   flex-direction: column;
   justify-content: center;
   height: 100%;
-  background: #E8E2D7 url('images/preparation-fabric-tape.webp') center / cover no-repeat;
+  background: var(--well-deep) url('images/preparation-fabric-tape.webp') center / cover no-repeat;
 }
 
 .guide-overlay {
@@ -1004,11 +1017,12 @@ main {
 }
 
 .tip-icon-wrap {
+  color: var(--gold-mark);
   width: 42px;
   height: 42px;
   border-radius: 8px;
-  background: #FFFFFF;
-  border: 1px solid #ECE7DD;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -1043,7 +1057,7 @@ main {
 /* Card Footer Utility Links */
 .workspace-footer {
   border-top: 1px solid var(--border-subtle);
-  background: #FAF9F7;
+  background: var(--surface-subtle);
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
@@ -1084,12 +1098,12 @@ main {
 }
 
 .photo-card {
-  border: 1px dashed #D3CDBF;
+  border: 1px dashed var(--stitch);
   border-radius: 10px;
   padding: 14px;
   text-align: center;
   transition: border-color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), background var(--dur-fast) ease;
-  border-color: #DCCFAF;
+  border-color: var(--gold-line);
   background: var(--paper);
 }
 
@@ -1099,7 +1113,7 @@ main {
   display: grid;
   place-items: center;
   color: var(--gold-mark);
-  background: #F4F1EA;
+  background: var(--well);
   border-radius: 8px;
   margin-bottom: 10px;
   overflow: hidden;
@@ -1113,7 +1127,7 @@ main {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  background: #EFECE6;
+  background: var(--well-deep);
 }
 
 .sample-badge {
@@ -1122,7 +1136,7 @@ main {
   right: 6px;
   background: rgba(20, 20, 20, 0.78);
   backdrop-filter: blur(4px);
-  color: #FFFFFF;
+  color: var(--on-dark);
   font-size: 11px;
   font-weight: 500;
   padding: 2px 6px;
@@ -1153,17 +1167,17 @@ main {
 .photo-card label {
   display: inline-block;
   margin-top: 8px;
-  border: 1px solid #DCD7CE;
+  border: 1px solid var(--border-control);
   border-radius: 6px;
   padding: 6px 14px;
   font-size: 12px;
   cursor: pointer;
-  background: #FFFFFF;
+  background: var(--bg-card);
   transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-out);
 }
 
 .photo-card label:hover {
-  background: #F6F4EE;
+  background: var(--surface-hover);
 }
 
 .photo-card input {
@@ -1245,7 +1259,7 @@ main {
   width: 100%;
   height: 80px;
   object-fit: contain;
-  background: #F5F1E8;
+  background: var(--well);
   border-radius: 6px;
   border: 1px solid var(--border-subtle);
 }
@@ -1274,7 +1288,7 @@ main {
   width: 100%;
   height: 96px;
   object-fit: contain;
-  background: #F4F1EA;
+  background: var(--well);
   border-radius: 6px;
   border: 1px solid var(--border-subtle);
 }
@@ -1324,7 +1338,7 @@ main {
 
 /* Size card */
 .size-card {
-  color: #FFFFFF;
+  color: var(--on-dark);
   border-radius: var(--radius-card);
   /* การ์ดไซส์ = ป้ายทอติดเสื้อ: navy ขอบด้ายทองเย็บโดยรอบ */
   position: relative;
@@ -1399,7 +1413,7 @@ main {
   margin-left: 6px;
   font-size: 18px;
   font-weight: 600;
-  color: #FFFFFF;
+  color: var(--on-dark);
 }
 
 .size-illus {
@@ -1412,7 +1426,7 @@ main {
 
 /* Soft white cards */
 .soft-card {
-  background: #FFFFFF;
+  background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
   padding: 20px 22px;
@@ -1461,7 +1475,7 @@ main {
   padding: 4px 12px;
   border-radius: var(--radius-pill);
   white-space: nowrap;
-  background: #FFFFFF;
+  background: var(--bg-card);
   border: 1px solid var(--paper-line);
 }
 
@@ -1545,8 +1559,8 @@ main {
   line-height: 1.5;
   color: var(--gold-dark);
   margin-bottom: 18px;
-  background: #F6EFDF;
-  border: 1px dashed #E3D2AC;
+  background: var(--gold-light);
+  border: 1px dashed var(--gold-line);
 }
 
 .result-note .ic {
@@ -1629,7 +1643,7 @@ main {
    ========================================================================== */
 footer {
   border-top: 1px solid var(--border-subtle);
-  background: #FFFFFF;
+  background: var(--bg-card);
   padding: 22px 0;
 }
 
@@ -1812,7 +1826,7 @@ dialog a {
   .actions {
     position: sticky;
     bottom: 0;
-    background: #FFFFFF;
+    background: var(--bg-card);
     padding: 14px 0 8px;
     margin-top: 18px;
     z-index: 20;
@@ -2006,7 +2020,7 @@ html {
 
 .secondary:not(:disabled):hover {
   transform: translateY(-1px);
-  border-color: #D6D1C6;
+  border-color: var(--border-control);
   box-shadow: 0 6px 16px rgba(21, 22, 21, .06);
 }
 
@@ -2070,7 +2084,7 @@ html {
 /* ── การ์ดรูป: hover ยก · รูปที่เพิ่งอัปโหลด fade เข้า · ✓ pop ── */
 
 .photo-card:hover {
-  border-color: #D9C9A6;
+  border-color: var(--gold-line-strong);
   transform: translateY(-2px);
   box-shadow: 0 8px 22px rgba(21, 22, 21, .06);
 }
@@ -2101,7 +2115,7 @@ html {
 
 .consent:has(input:checked) {
   background: var(--gold-light);
-  border-color: #E6D5AE;
+  border-color: var(--gold-line);
 }
 
 /* ── หน้ากำลังโหลด ── */
@@ -2317,26 +2331,26 @@ dialog h2 {
 }
 
 .step b {
-  background: #FFFFFF;
+  background: var(--bg-card);
   color: var(--ink-muted);
 }
 
 .step.active b {
   background: var(--navy);
-  color: #FFFFFF;
-  box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 3.5px var(--gold-primary), 0 4px 14px var(--gold-glow);
+  color: var(--on-dark);
+  box-shadow: 0 0 0 2px var(--bg-card), 0 0 0 3.5px var(--gold-primary), 0 4px 14px var(--gold-glow);
 }
 
 .step.complete b {
   background: var(--gold-primary);
-  color: #FFFFFF;
+  color: var(--navy);
   box-shadow: none;
 }
 
 .mob-dot.active {
   background: var(--navy);
-  color: #FFFFFF;
-  box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 3.5px var(--gold-primary);
+  color: var(--on-dark);
+  box-shadow: 0 0 0 2px var(--bg-card), 0 0 0 3.5px var(--gold-primary);
 }
 
 .mob-dot.complete {
@@ -2358,8 +2372,8 @@ dialog h2 {
   height: 34px;
   margin: 0 auto 26px;
   border-radius: 4px;
-  background: #F4EFE3;
-  border: 1px solid #E2D9C3;
+  background: var(--well);
+  border: 1px solid var(--paper-line);
   overflow: hidden;
   transform-origin: left center;
 }
@@ -2410,7 +2424,7 @@ dialog h2 {
 /* การ์ดสัดส่วน = ตั๋ววัดตัวบนกระดาษ: ขอบบนเป็นสายวัด, หัวตั๋วเส้นประฉีก, ตัวเลขฟอนต์หัวข้อ */
 .ticket {
   background: var(--paper);
-  border-color: #E1D9C6;
+  border-color: var(--paper-line);
   position: relative;
   overflow: hidden;
 }
@@ -2423,7 +2437,7 @@ dialog h2 {
   right: 0;
   height: 10px;
   background-image:
-    repeating-linear-gradient(90deg, #B99C5F 0 1px, transparent 1px 8px),
+    repeating-linear-gradient(90deg, var(--thread-soft) 0 1px, transparent 1px 8px),
     repeating-linear-gradient(90deg, var(--navy) 0 1.5px, transparent 1.5px 40px);
   background-size: 40px 5px, 40px 9px;
   background-position: 0 100%, 0 100%;
@@ -2563,7 +2577,7 @@ dialog h2 {
   flex-direction: column;
   height: 100%;
   padding: 10px 10px 14px;
-  background: #FCFBF7;
+  background: var(--paper);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-inner);
   text-decoration: none;
@@ -2582,7 +2596,7 @@ dialog h2 {
   aspect-ratio: 5 / 6;
   overflow: hidden;
   border-radius: 6px;
-  background: #ECE8DF;
+  background: var(--well-deep);
   margin-bottom: 12px;
 }
 
@@ -2740,7 +2754,7 @@ input[type="checkbox"], input[type="radio"] {
   padding: 10px 16px;
   border-radius: var(--radius-inner);
   background: var(--navy);
-  color: #FFFFFF;
+  color: var(--on-dark);
   font-size: 14px;
   font-weight: 500;
   text-decoration: none;
@@ -2779,7 +2793,7 @@ input[type="checkbox"], input[type="radio"] {
   margin-right: 6px;
   border-radius: 50%;
   background: var(--danger);
-  color: #FFFFFF;
+  color: var(--on-dark);
   font-size: 11px;
   font-weight: 600;
   vertical-align: 1px;
@@ -2823,7 +2837,7 @@ input[type="checkbox"], input[type="radio"] {
   padding: 0 12px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-pill);
-  background: #FFFFFF;
+  background: var(--bg-card);
   color: var(--ink-primary);
   font-size: 13px;
   font-weight: 500;
@@ -3047,7 +3061,7 @@ dialog .secondary.danger:hover { background: var(--danger-bg); border-color: var
   margin-right: 6px;
   border-radius: 50%;
   background: var(--danger);
-  color: #FFFFFF;
+  color: var(--on-dark);
   font-size: 11px;
   font-weight: 600;
   vertical-align: 1px;
