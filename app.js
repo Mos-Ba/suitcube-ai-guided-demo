@@ -376,7 +376,7 @@ function render() {
     ];
     body = `
 
-      <img src="images/suitcube-ai-logo.png" alt="SUITCUBE AI" class="print-only print-logo">
+      <img src="images/suitcube-ai-logo.webp" alt="SUITCUBE AI" class="print-only print-logo">
       <div class="result-title">
         <h2 tabindex="-1">ผลประเมินขนาดของคุณ</h2>
         <p class="sub">สรุปไซส์แนะนำและสัดส่วนเบื้องต้นของคุณ</p>

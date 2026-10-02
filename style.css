@@ -766,7 +766,7 @@ main {
   flex-direction: column;
   justify-content: center;
   height: 100%;
-  background: #E8E2D7 url('preparation-fabric-tape.png') center / cover no-repeat;
+  background: #E8E2D7 url('images/preparation-fabric-tape.webp') center / cover no-repeat;
 }
 
 .guide-overlay {
