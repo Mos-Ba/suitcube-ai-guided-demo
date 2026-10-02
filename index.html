@@ -6,11 +6,9 @@
   <title>SUITCUBE AI — เริ่มวัดตัว ทีละขั้น พร้อมคำแนะนำ</title>
   <meta name="description" content="วัดตัวออนไลน์กับ SUITCUBE AI ใช้เพียงข้อมูลพื้นฐาน ภาพถ่าย และรับผลประเมินสัดส่วนที่เหมาะกับคุณ">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23191919'/%3E%3Cpath d='M8 10h16v12H8z' fill='none' stroke='%23C3933E' stroke-width='2'/%3E%3C/svg%3E">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- ฟอนต์ Prompt อยู่ในโฟลเดอร์ fonts/ (ประกาศใน style.css) — ไม่โหลดจากเซิร์ฟเวอร์ภายนอก -->
   <!-- แก้ style.css / i18n.js / app.js แล้วต้องเปลี่ยนเลข ?v= ทั้ง 3 ที่ ไม่งั้นเบราว์เซอร์ใช้ไฟล์เก่าจากแคชคู่กับ HTML ใหม่ -->
-  <link rel="stylesheet" href="style.css?v=20261002f">
+  <link rel="stylesheet" href="style.css?v=20261002g">
 </head>
 <body>
   <a class="skip-link" href="#surface" data-i18n="skip">ข้ามไปยังแบบฟอร์มวัดตัว</a>
@@ -194,7 +192,6 @@
     <section class="picks-section" aria-labelledby="picks-title">
       <div class="picks-head">
         <div>
-          <span class="eyebrow">RECOMMENDED</span>
           <h2 id="picks-title" data-i18n="picksTitle">สูทแนะนำสำหรับคุณ</h2>
           <p id="picks-sub">คัดจากคอลเลกชันที่ suitcube.com</p>
         </div>
@@ -221,7 +218,7 @@
     <button type="button" class="primary" id="close-dialog" data-i18n="dialogClose">เข้าใจแล้ว</button>
   </dialog>
 
-  <script src="i18n.js?v=20261002f"></script>
-  <script src="app.js?v=20261002f"></script>
+  <script src="i18n.js?v=20261002g"></script>
+  <script src="app.js?v=20261002g"></script>
 </body>
 </html>

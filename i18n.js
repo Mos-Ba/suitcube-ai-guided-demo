@@ -506,12 +506,4 @@ function applyStaticI18n() {
   document.querySelector('meta[name="description"]')?.setAttribute('content', t('desc'));
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
-  // ฟอนต์จีนโหลดเฉพาะเมื่อเลือกภาษาจีน (Prompt ไม่มีตัวอักษรจีน)
-  if (LANG === 'zh' && !document.querySelector('#font-zh')) {
-    const link = document.createElement('link');
-    link.id = 'font-zh';
-    link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap';
-    document.head.append(link);
-  }
 }
