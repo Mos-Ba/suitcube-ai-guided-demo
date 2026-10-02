@@ -12,31 +12,42 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <a class="skip-link" href="#surface">ข้ามไปยังแบบฟอร์มวัดตัว</a>
+  <a class="skip-link" href="#surface" data-i18n="skip">ข้ามไปยังแบบฟอร์มวัดตัว</a>
   <!-- Global Header -->
   <header>
     <div class="header-inner">
-      <a class="brand" href="./" aria-label="SUITCUBE AI หน้าแรก">
+      <a class="brand" href="./" aria-label="SUITCUBE AI หน้าแรก" data-i18n-aria="brandLabel">
         <img src="images/suitcube-ai-logo.webp" alt="SUITCUBE AI" class="brand-logo" width="414" height="72">
       </a>
 
+      <!-- สลับภาษา (ใช้ select ของระบบ: บนมือถือได้ตัวเลือกแบบ native) -->
+      <label class="lang-switch">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+        <span class="sr-only" data-i18n="langLabel">ภาษา</span>
+        <select id="lang-select" autocomplete="off">
+          <option value="th" lang="th">ไทย</option>
+          <option value="en" lang="en">EN</option>
+          <option value="zh" lang="zh-Hans">中文</option>
+        </select>
+      </label>
+
       <!-- Desktop Nav -->
       <nav class="desktop-nav">
-        <button type="button" class="nav-link" data-help="how">วิธีใช้งาน</button>
+        <button type="button" class="nav-link" data-help="how" data-i18n="navHow">วิธีใช้งาน</button>
         <span class="nav-divider"></span>
         <button type="button" class="nav-link stylist-link" data-help="stylist">
           <svg class="icon-chat" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11a9 9 0 0 1-9 9 10 10 0 0 1-4-.8L3 21l1.7-5A9 9 0 1 1 21 11Z"/><circle cx="8" cy="11" r=".65" fill="currentColor" stroke="none"/><circle cx="12" cy="11" r=".65" fill="currentColor" stroke="none"/><circle cx="16" cy="11" r=".65" fill="currentColor" stroke="none"/></svg>
-          <span>ปรึกษาเรา</span>
+          <span data-i18n="navStylist">ปรึกษาเรา</span>
         </button>
       </nav>
 
       <!-- Mobile Header Right -->
       <div class="mobile-nav-wrap">
-        <button type="button" class="mobile-stylist-btn" data-help="stylist" aria-label="ปรึกษาเรา">
+        <button type="button" class="mobile-stylist-btn" data-help="stylist" aria-label="ปรึกษาเรา" data-i18n-aria="navStylist">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11a9 9 0 0 1-9 9 10 10 0 0 1-4-.8L3 21l1.7-5A9 9 0 1 1 21 11Z"/><circle cx="8" cy="11" r=".65" fill="currentColor" stroke="none"/><circle cx="12" cy="11" r=".65" fill="currentColor" stroke="none"/><circle cx="16" cy="11" r=".65" fill="currentColor" stroke="none"/></svg>
-          <span>ปรึกษาเรา</span>
+          <span data-i18n="navStylist">ปรึกษาเรา</span>
         </button>
-        <button type="button" class="mobile-menu-btn" id="mobile-menu-toggle" aria-label="เปิดเมนู" data-help="how">
+        <button type="button" class="mobile-menu-btn" id="mobile-menu-toggle" aria-label="เปิดเมนู" data-i18n-aria="menuLabel" data-help="how">
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
       </div>
@@ -61,12 +72,10 @@
 
       <div class="hero-left">
         <h1 class="hero-title">
-          เริ่มวัดตัว
-          <span class="hero-gold">ทีละขั้น พร้อมคำแนะนำ</span>
+          <span data-i18n="heroTitle">เริ่มวัดตัว</span>
+          <span class="hero-gold" data-i18n="heroGold">ทีละขั้น พร้อมคำแนะนำ</span>
         </h1>
-        <p class="hero-subtitle">
-          ใช้เพียงข้อมูลพื้นฐาน ภาพถ่าย และรับผลประเมินสัดส่วนที่เหมาะกับคุณ
-        </p>
+        <p class="hero-subtitle" data-i18n="heroSub">ใช้เพียงข้อมูลพื้นฐาน ภาพถ่าย และรับผลประเมินสัดส่วนที่เหมาะกับคุณ</p>
       </div>
 
       <div class="hero-book-tag">
@@ -84,11 +93,11 @@
 
     <!-- เนื้อหาที่เหลือล็อกความกว้างไว้ ส่วน hero ด้านบนกว้างเต็มจอ -->
     <div class="main-inner">
-    <noscript><p class="noscript-note">หน้านี้ต้องใช้ JavaScript ในการวัดตัว กรุณาเปิด JavaScript ในเบราว์เซอร์แล้วโหลดหน้าใหม่</p></noscript>
+    <noscript><p class="noscript-note">หน้านี้ต้องใช้ JavaScript ในการวัดตัว กรุณาเปิด JavaScript ในเบราว์เซอร์แล้วโหลดหน้าใหม่<br>This page needs JavaScript. Please enable it in your browser and reload.<br>本页面需要启用 JavaScript，请在浏览器中开启后重新加载。</p></noscript>
 
     <!-- Mobile Horizontal Stepper Indicator -->
     <div class="mobile-stepper" id="mobile-stepper">
-      <div class="mobile-step-label">ขั้นตอน <span id="mobile-step-num">1</span> จาก 4</div>
+      <div class="mobile-step-label" id="mobile-step-label">ขั้นตอน 1 จาก 4</div>
       <div class="mobile-step-dots">
         <button type="button" class="mob-dot active" data-step="0" aria-label="ขั้นตอน 1 ข้อมูลเบื้องต้น">1</button>
         <div class="mob-line"></div>
@@ -101,11 +110,11 @@
     </div>
 
     <!-- Main Workspace Card Container -->
-    <section class="workspace-card" aria-label="ขั้นตอนการวัดตัว">
+    <section class="workspace-card" aria-label="ขั้นตอนการวัดตัว" data-i18n-aria="workspaceLabel">
       <div class="workspace-body" id="workspace-body">
         
         <!-- Left: Desktop Vertical Stepper -->
-        <aside class="steps-column" id="steps" aria-label="ขั้นตอน"></aside>
+        <aside class="steps-column" id="steps" aria-label="ขั้นตอน" data-i18n-aria="stepsLabel"></aside>
 
         <!-- Center: Dynamic Interactive Surface -->
         <div class="surface-column" id="surface" tabindex="-1"></div>
@@ -115,8 +124,8 @@
           <!-- Accordion Toggle for Mobile -->
           <div class="guide-accordion-header" id="guide-accordion-toggle" role="button" tabindex="0" aria-expanded="false" aria-controls="guide-box">
             <div class="guide-acc-text">
-              <span class="guide-acc-title">เตรียมข้อมูลให้พร้อม</span>
-              <span class="guide-acc-summary">ข้อมูลสัดส่วน ภาพถ่ายตามคำแนะนำในพื้นที่สว่าง</span>
+              <span class="guide-acc-title" data-i18n="guideTitle">เตรียมข้อมูลให้พร้อม</span>
+              <span class="guide-acc-summary" data-i18n="guideSummary">ข้อมูลสัดส่วน ภาพถ่ายตามคำแนะนำในพื้นที่สว่าง</span>
             </div>
             <span class="guide-acc-arrow" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
@@ -126,7 +135,7 @@
           <!-- Guide Content -->
           <div class="guide-box" id="guide-box">
             <div class="guide-overlay">
-              <h2 class="guide-title">เตรียมข้อมูลให้พร้อม</h2>
+              <h2 class="guide-title" data-i18n="guideTitle">เตรียมข้อมูลให้พร้อม</h2>
 
               <!-- 2 Tips with Custom Golden Icons -->
               <div class="guide-tips-list">
@@ -138,8 +147,8 @@
                     </svg>
                   </div>
                   <div class="tip-text">
-                    <strong>ข้อมูลสัดส่วน</strong>
-                    <p>เช่น ส่วนสูง น้ำหนัก รอบเอว</p>
+                    <strong data-i18n="tip1Title">ข้อมูลสัดส่วน</strong>
+                    <p data-i18n="tip1Text">เช่น ส่วนสูง น้ำหนัก รอบเอว</p>
                   </div>
                 </div>
 
@@ -151,14 +160,14 @@
                     </svg>
                   </div>
                   <div class="tip-text">
-                    <strong>ภาพถ่ายตามคำแนะนำในพื้นที่สว่าง</strong>
-                    <p>ถ่ายตามมุมที่กำหนด</p>
-                    <p>ถ่ายในที่มีแสงเพียงพอ</p>
+                    <strong data-i18n="tip2Title">ภาพถ่ายตามคำแนะนำในพื้นที่สว่าง</strong>
+                    <p data-i18n="tip2a">ถ่ายตามมุมที่กำหนด</p>
+                    <p data-i18n="tip2b">ถ่ายในที่มีแสงเพียงพอ</p>
                   </div>
                 </div>
               </div>
 
-              <button type="button" class="guide-learn-more" data-help="photo">ดูวิธีเตรียมภาพถ่าย <span>↗</span></button>
+              <button type="button" class="guide-learn-more" data-help="photo"><span data-i18n="guideMore">ดูวิธีเตรียมภาพถ่าย</span> <span aria-hidden="true">↗</span></button>
             </div>
           </div>
         </aside>
@@ -170,7 +179,7 @@
         <div class="footer-link-item">
           <button type="button" class="btn-utility-link" data-help="photo">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            <span>ยังไม่พร้อมถ่ายภาพ? <strong>ดูวิธีเตรียมตัว →</strong></span>
+            <span><span data-i18n="utilLead">ยังไม่พร้อมถ่ายภาพ?</span> <strong data-i18n="utilLink">ดูวิธีเตรียมตัว →</strong></span>
           </button>
         </div>
       </div>
@@ -181,10 +190,10 @@
       <div class="picks-head">
         <div>
           <span class="eyebrow">RECOMMENDED</span>
-          <h2 id="picks-title">สูทแนะนำสำหรับคุณ</h2>
+          <h2 id="picks-title" data-i18n="picksTitle">สูทแนะนำสำหรับคุณ</h2>
           <p id="picks-sub">คัดจากคอลเลกชันที่ suitcube.com</p>
         </div>
-        <a class="picks-all" id="picks-all" href="https://www.suitcube.com/ultimate-fit/" target="_blank" rel="noopener">ดูทั้งหมดที่ suitcube.com →</a>
+        <a class="picks-all" id="picks-all" href="https://www.suitcube.com/ultimate-fit/" target="_blank" rel="noopener" data-i18n="picksAll">ดูทั้งหมดที่ suitcube.com →</a>
       </div>
       <ul class="picks-grid" id="picks-grid"></ul>
     </section>
@@ -197,16 +206,17 @@
   <footer>
     <div class="footer-inner">
       <span>SUITCUBE <small>PERSONALITY · PEOPLE · PLANET</small></span>
-      <button type="button" data-help="privacy">ข้อมูลและความเป็นส่วนตัว</button>
+      <button type="button" data-help="privacy" data-i18n="footPrivacy">ข้อมูลและความเป็นส่วนตัว</button>
     </div>
   </footer>
 
   <!-- Modal Dialog -->
   <dialog id="dialog">
     <div id="dialog-content"></div>
-    <button type="button" class="primary" id="close-dialog">เข้าใจแล้ว</button>
+    <button type="button" class="primary" id="close-dialog" data-i18n="dialogClose">เข้าใจแล้ว</button>
   </dialog>
 
+  <script src="i18n.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

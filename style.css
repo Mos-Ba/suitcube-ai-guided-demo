@@ -2846,3 +2846,79 @@ html {
 .field-error {
   overflow-wrap: anywhere;
 }
+
+/* ==========================================================================
+   สลับภาษา (ไทย / EN / 中文)
+   ========================================================================== */
+.lang-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  margin-right: 20px;
+  height: 34px;
+  padding: 0 8px 0 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  color: var(--ink-secondary);
+  background: #FFFFFF;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.lang-switch:hover { border-color: var(--gold-primary); color: var(--ink-primary); }
+.lang-switch:focus-within {
+  outline: 2px solid var(--gold-primary);
+  outline-offset: 2px;
+}
+.lang-switch svg { flex-shrink: 0; }
+.lang-switch select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  outline: none;
+  background: transparent url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%2359606E' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='m3 4.5 3 3 3-3'/></svg>") right center / 12px no-repeat;
+  padding: 0 16px 0 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: inherit;
+  cursor: pointer;
+}
+.lang-switch select option { color: #1A2130; background: #FFFFFF; }
+
+@media (pointer: coarse), (max-width: 860px) {
+  .lang-switch { height: 44px; margin-right: 4px; }
+  .lang-switch select { font-size: 16px; } /* กัน iOS ซูมตอนแตะ */
+}
+
+/* จอแคบ: ซ่อนคำว่า "ปรึกษาเรา" เหลือไอคอน (ปุ่มยังมี aria-label) ให้พอที่สำหรับตัวเลือกภาษา */
+@media (max-width: 480px) {
+  .mobile-stylist-btn span { display: none; }
+  .mobile-stylist-btn { width: 44px; justify-content: center; padding: 0; }
+}
+@media (max-width: 350px) {
+  .brand-logo { height: 20px; width: auto; }
+  .header-inner { padding: 0 12px; }
+}
+
+@media print { .lang-switch { display: none; } }
+
+/* ── ภาษาจีน: Prompt ไม่มีตัวอักษรจีน → ตัวจีนใช้ Noto Sans SC (ตัวเลข/ละตินยังเป็น Prompt) ── */
+:root[lang="zh-Hans"] {
+  --font-main: 'Prompt', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', sans-serif;
+}
+:root[lang="zh-Hans"] body { font-weight: 400; }  /* ตัวจีนน้ำหนัก 300 บางเกินอ่าน */
+
+/* อังกฤษ/จีน: ป้ายยาวกว่าไทย — ให้ตัดบรรทัดได้ ไม่ดันกล่องล้น */
+.step span,
+.gender button,
+.photo-card label,
+.measure-item span,
+.review > div > span,
+.review > div > strong {
+  overflow-wrap: anywhere;
+}
+
+/* หน่วย (เช่น 英寸) ห้ามตัดบรรทัดกลางคำ */
+.unit-tag { white-space: nowrap; flex-shrink: 0; }

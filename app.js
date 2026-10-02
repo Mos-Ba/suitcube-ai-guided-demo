@@ -1,5 +1,6 @@
-const labels = ['ข้อมูลเบื้องต้น', 'ภาพถ่าย', 'ตรวจสอบ', 'ผลประเมิน'];
-const angles = ['ด้านหน้า', 'ด้านหลัง', 'ด้านซ้าย', 'ด้านขวา'];
+// ข้อความทุกภาษาอยู่ใน i18n.js (โหลดก่อนไฟล์นี้) — labels/angles เปลี่ยนตามภาษาใน setLang()
+let labels = t('steps');
+let angles = t('angles');
 const photoKeys = ['front', 'back', 'left', 'right'];
 
 // เว็บจริงเรียก /api แบบ same-origin (nginx เติม API key ให้เบื้องหลัง — ห้ามใส่ key ในหน้าเว็บ)
@@ -137,10 +138,12 @@ const escapeText = v => String(v).replace(/[&<>"']/g, c => ({
 }[c]));
 
 // สูทแนะนำท้ายหน้า — ชื่อ/รูป/ลิงก์คัดลอกจาก suitcube.com (2026-10-01) ถ้าหน้าร้านเปลี่ยนสินค้าต้องแก้ที่นี่ด้วย
+// ลิงก์ตามภาษา: suitcube.com ใช้ /en/ และ /zh-hans/ นำหน้า path เดิม (ตรวจแล้ว 2026-10-02)
+const SITE_PREFIX = { th: '', en: 'en/', zh: 'zh-hans/' };
 const PICKS = {
   male: {
-    all: 'https://www.suitcube.com/ultimate-fit/',
-    line: 'ULTIMATE FIT',
+    all: { th: 'ultimate-fit/', en: 'en/ultimate-fit/', zh: 'zh-hans/ultimate-fit/' },
+    line: () => 'ULTIMATE FIT',
     items: [
       ['Formal Blue', 'UF2039-1', 'm-formal-blue.webp', 'formalblue'],
       ['Classic Black', 'UF068-BK', 'm-classic-black.webp', 'classicblack'],
@@ -149,8 +152,9 @@ const PICKS = {
     ]
   },
   female: {
-    all: 'https://www.suitcube.com/product-category/women-suit/',
-    line: 'สูทผู้หญิง',
+    // หน้าหมวดสูทผู้หญิงภาษาจีนยังไม่มีบน suitcube.com → ชี้หน้าแรกภาษาจีนแทน
+    all: { th: 'product-category/women-suit/', en: 'en/product-category/women-suit/', zh: 'zh-hans/' },
+    line: () => t('pickLineWomen'),
     items: [
       ['Camila Navy Berry', 'F570-620', 'w-navy-berry.jpg', 'camila-navy-berry-f570-620'],
       ['Camila Snow White', 'F570-526', 'w-snow-white.webp', 'camila-snow-white-f570-526'],
@@ -167,23 +171,22 @@ function renderPicks() {
   const m = state.result?.measurements;
   const size = state.step === 3 && typeof m?.chest === 'number'
     ? String(recommendSizes(m.chest, state.gender).main || '').replace(/^sz/i, '') : '';
-  const key = `${state.gender}|${size}`;
+  const key = `${LANG}|${state.gender}|${size}`;
   if (key === picksKey) return;
   picksKey = key;
 
   const set = PICKS[state.gender] || PICKS.male;
-  document.querySelector('#picks-all').href = set.all;
-  document.querySelector('#picks-sub').textContent = size
-    ? `ไซส์แนะนำของคุณคือ ${size} — เลือกไซส์นี้เมื่อสั่งซื้อที่ suitcube.com`
-    : 'คัดจากคอลเลกชันที่ suitcube.com';
+  const site = 'https://www.suitcube.com/';
+  document.querySelector('#picks-all').href = site + set.all[LANG];
+  document.querySelector('#picks-sub').textContent = size ? t('picksSubSize', { size }) : t('picksSub');
   grid.innerHTML = set.items.map(([name, code, img, slug]) => `
     <li>
-      <a class="pick-card" href="https://www.suitcube.com/product/${slug}/" target="_blank" rel="noopener">
-        <span class="pick-photo"><img src="images/products/${img}" alt="สูท ${escapeText(name)}" width="330" height="396" loading="lazy"></span>
-        <span class="pick-line">${set.line}</span>
+      <a class="pick-card" href="${site}${SITE_PREFIX[LANG]}product/${slug}/" target="_blank" rel="noopener">
+        <span class="pick-photo"><img src="images/products/${img}" alt="${escapeText(t('pickAlt', { name }))}" width="330" height="396" loading="lazy"></span>
+        <span class="pick-line">${escapeText(set.line())}</span>
         <strong>${escapeText(name)}</strong>
         <span class="pick-code">${code}</span>
-        <span class="pick-cta">ดูสินค้า →</span>
+        <span class="pick-cta">${t('pickCta')}</span>
       </a>
     </li>`).join('');
 }
@@ -199,44 +202,47 @@ async function go(n) {
   scrollToWorkspace();
 }
 
-// ช่วงค่าที่รับ (ตรงกับที่ API ตรวจ) — ใช้ทั้งวาดช่องกรอกและตรวจค่า
+// ช่วงค่าที่รับ (ตรงกับที่ API ตรวจ) — ใช้ทั้งวาดช่องกรอกและตรวจค่า · ชื่อช่อง/หน่วยมาจาก i18n
 const FIELD_RULES = {
-  height: ['ส่วนสูง', 'cm', 100, 230],
-  weight: ['น้ำหนัก', 'kg', 25, 250],
-  waist: ['รอบเอวกางเกง', 'นิ้ว', 20, 70],
-  chest: ['รอบอก', 'นิ้ว', 20, 70],
-  hip: ['รอบสะโพก', 'นิ้ว', 20, 80]
+  height: ['cm', 100, 230],
+  weight: ['kg', 25, 250],
+  waist: ['in', 20, 70],
+  chest: ['in', 20, 70],
+  hip: ['in', 20, 80]
 };
+const fieldTitle = key => t(`f_${key}`);
+const unitText = unit => (unit === 'in' ? t('unitIn') : unit);
 
 function field(key, disabled = false) {
-  const [title, unit, min, max] = FIELD_RULES[key];
+  const [unit, min, max] = FIELD_RULES[key];
   const isWaist = key === 'waist';
   return `
     <div class="field">
-      <label for="${key}">${title}</label>
+      <label for="${key}">${fieldTitle(key)}</label>
       <div class="input-wrap">
         <input id="${key}" name="${key}" type="number" inputmode="decimal" step="any" min="${min}" max="${max}" required ${disabled ? 'disabled' : ''} value="${escapeText(state.values[key])}" autocomplete="off" aria-describedby="${isWaist ? 'waist-hint ' : ''}${key}-error">
-        <span class="unit-tag">${unit}</span>
-        ${isWaist ? '<button type="button" class="inline-help-btn" data-help="waist" aria-label="วิธีดูรอบเอวกางเกง">?</button>' : ''}
+        <span class="unit-tag">${unitText(unit)}</span>
+        ${isWaist ? `<button type="button" class="inline-help-btn" data-help="waist" aria-label="${t('waistHelpLabel')}">?</button>` : ''}
       </div>
-      ${isWaist ? '<p class="hint" id="waist-hint">ใช้ขนาดเอวกางเกงที่คุณใส่</p>' : ''}
+      ${isWaist ? `<p class="hint" id="waist-hint">${t('waistHint')}</p>` : ''}
       <p class="field-error" id="${key}-error" hidden></p>
     </div>
   `;
 }
 
-// ข้อความ error ของช่องกรอก (คืน '' ถ้าค่าถูกต้อง) — บอกปัญหาและวิธีแก้เป็นภาษาไทย แทนกล่องของเบราว์เซอร์
+// ข้อความ error ของช่องกรอก (คืน '' ถ้าค่าถูกต้อง) — บอกปัญหาและวิธีแก้ในภาษาที่เลือก แทนกล่องของเบราว์เซอร์
 function fieldMessage(input) {
-  const [title, unit, min, max] = FIELD_RULES[input.name];
-  if (input.validity.badInput) return `กรุณากรอก${title}เป็นตัวเลข`;
+  const [unit, min, max] = FIELD_RULES[input.name];
+  const title = fieldTitle(input.name);
+  const vars = { title, titleLower: title.toLowerCase(), min, max, unit: unitText(unit) };
+  if (input.validity.badInput) return t('errNumber', vars);
   const raw = input.value.trim();
-  if (!raw) return `กรุณากรอก${title}`;
+  if (!raw) return t('errEmpty', vars);
   const n = Number(raw);
-  if (!Number.isFinite(n)) return `กรุณากรอก${title}เป็นตัวเลข`;
+  if (!Number.isFinite(n)) return t('errNumber', vars);
   if (n < min || n > max) {
     // กรอกเป็นเซนติเมตรแทนนิ้ว เป็นความผิดพลาดที่เจอบ่อย
-    const cmHint = unit === 'นิ้ว' && n > max ? ' — ถ้าวัดเป็นเซนติเมตร ให้หารด้วย 2.54' : '';
-    return `${title}ควรอยู่ระหว่าง ${min}–${max} ${unit}${cmHint}`;
+    return t('errRange', vars) + (unit === 'in' && n > max ? t('errCm') : '');
   }
   return '';
 }
@@ -275,9 +281,10 @@ function renderStepper(force = false) {
     `).join('');
   }
 
-  const mobStepNum = document.querySelector('#mobile-step-num');
-  if (mobStepNum) mobStepNum.textContent = state.step + 1;
+  const mobLabel = document.querySelector('#mobile-step-label');
+  if (mobLabel) mobLabel.textContent = t('stepOf', { n: state.step + 1 });
   document.querySelectorAll('.mob-dot').forEach((dot, idx) => {
+    dot.setAttribute('aria-label', t('dotLabel', { n: idx + 1, label: labels[idx] }));
     dot.classList.toggle('active', idx === state.step);
     dot.classList.toggle('complete', idx < state.step);
     dot.disabled = idx > state.max || state.busy;
@@ -299,11 +306,11 @@ function render() {
   let body = '';
   if (state.step === 0) {
     body = `
-      <h2 tabindex="-1">ข้อมูลเบื้องต้น</h2>
-      <p class="sub">เริ่มจากข้อมูลที่คุณทราบ</p>
-      <div class="gender" role="group" aria-label="ประเภทสูท" data-gender="${state.gender}">
-        <button type="button" data-gender="male" class="${state.gender === 'male' ? 'selected' : ''}" aria-pressed="${state.gender === 'male'}">สูทผู้ชาย</button>
-        <button type="button" data-gender="female" class="${state.gender === 'female' ? 'selected' : ''}" aria-pressed="${state.gender === 'female'}">สูทผู้หญิง</button>
+      <h2 tabindex="-1">${labels[0]}</h2>
+      <p class="sub">${t('s0Sub')}</p>
+      <div class="gender" role="group" aria-label="${t('genderLabel')}" data-gender="${state.gender}">
+        <button type="button" data-gender="male" class="${state.gender === 'male' ? 'selected' : ''}" aria-pressed="${state.gender === 'male'}">${t('genderMale')}</button>
+        <button type="button" data-gender="female" class="${state.gender === 'female' ? 'selected' : ''}" aria-pressed="${state.gender === 'female'}">${t('genderFemale')}</button>
       </div>
       <form id="basics" novalidate>
         ${field('height')}
@@ -316,60 +323,61 @@ function render() {
           </div>
         </div>
         <div class="actions">
-          <button class="primary" type="submit">ถัดไป: เตรียมภาพถ่าย <span aria-hidden="true">→</span></button>
+          <button class="primary" type="submit">${t('next1')} <span aria-hidden="true">→</span></button>
         </div>
       </form>
-      <p class="form-foot">ไม่ต้องสมัครสมาชิก · ข้อมูลจะถูกส่งเมื่อคุณกดยืนยันในขั้นตอนตรวจสอบเท่านั้น</p>
+      <p class="form-foot">${t('formFoot')}</p>
     `;
   } else if (state.step === 1) {
+    const failedNames = state.failedPhotos.map(k => angles[photoKeys.indexOf(k)]).join(t('listSep'));
     body = `
-      <h2 tabindex="-1">ภาพถ่ายของคุณ</h2>
-      <p class="sub">เตรียมภาพเต็มตัวทั้ง 4 มุม (เห็นศีรษะถึงปลายเท้า)</p>
+      <h2 tabindex="-1">${t('s1Title')}</h2>
+      <p class="sub">${t('s1Sub')}</p>
       <div class="photos">
         ${angles.map((a, i) => `
           <div class="photo-card ${state.failedPhotos.includes(photoKeys[i]) ? 'photo-failed' : ''} ${state.justAdded === i ? 'just-added' : ''}">
             <div class="photo-preview ${state.photos[i] ? 'has-image' : ''}">
               ${state.photos[i] ? `
-                <img src="${state.photos[i].url}" alt="ภาพ${a}">
-                ${state.failedPhotos.includes(photoKeys[i]) ? '<span class="retake-badge">ถ่ายใหม่</span>' : ''}
+                <img src="${state.photos[i].url}" alt="${t('photoAlt', { angle: a })}">
+                ${state.failedPhotos.includes(photoKeys[i]) ? `<span class="retake-badge">${t('retake')}</span>` : ''}
               ` : `
-                <img src="images/photo-sample-${photoKeys[i]}.jpg" alt="ตัวอย่างท่ายืนถ่ายภาพ${a}" class="photo-example">
-                <span class="sample-badge">ตัวอย่าง</span>
+                <img src="images/photo-sample-${photoKeys[i]}.jpg" alt="${t('sampleAlt', { angle: a })}" class="photo-example">
+                <span class="sample-badge">${t('sample')}</span>
               `}
             </div>
             <strong>${a} ${state.photos[i] && !state.failedPhotos.includes(photoKeys[i]) ? '<span class="check-mark-text">✓</span>' : ''}</strong>
             <label for="photo${i}">
-              ${state.photos[i] ? 'เปลี่ยนภาพ' : 'เลือกภาพ'}
+              ${state.photos[i] ? t('change') : t('choose')}
               <input id="photo${i}" type="file" accept="image/jpeg,image/png,image/webp" data-photo="${i}">
             </label>
-            ${state.photos[i] ? `<button type="button" class="remove-photo-btn" data-remove="${i}">นำภาพออก</button>` : ''}
+            ${state.photos[i] ? `<button type="button" class="remove-photo-btn" data-remove="${i}">${t('remove')}</button>` : ''}
           </div>
         `).join('')}
       </div>
-      <p class="privacy">รองรับ JPG, PNG, WebP · ภาพขนาดใหญ่จะถูกย่อให้อัตโนมัติ<br>ภาพยังอยู่ในเครื่องของคุณจนกว่าจะกดยืนยันส่งในขั้นตอนถัดไป</p>
-      <button type="button" class="text-button" data-help="photo">ดูวิธีถ่ายภาพทั้ง 4 มุม ↗</button>
+      <p class="privacy">${t('photoNote')}</p>
+      <button type="button" class="text-button" data-help="photo">${t('photoHow')}</button>
       <p class="error" id="error" role="alert">${state.errorMsg ? escapeText(state.errorMsg) : state.failedPhotos.length
-        ? `ระบบตรวจจับร่างกายในภาพ${state.failedPhotos.map(k => angles[photoKeys.indexOf(k)]).join(', ')}ไม่ได้ — กรุณาถ่ายใหม่ให้เห็นศีรษะถึงปลายเท้า พื้นหลังเรียบ แสงพอ`
+        ? escapeText(t('photoFailed', { angles: failedNames }))
         : ''}</p>
       <div class="actions">
-        <button type="button" class="secondary" data-step="0">ย้อนกลับ</button>
-        <button type="button" class="primary" id="photos-next">ถัดไป: ตรวจสอบข้อมูล →</button>
+        <button type="button" class="secondary" data-step="0">${t('back')}</button>
+        <button type="button" class="primary" id="photos-next">${t('next2')}</button>
       </div>
     `;
   } else if (state.step === 2) {
     body = `
-      <h2 tabindex="-1">ตรวจสอบอีกครั้ง</h2>
-      <p class="sub">ตรวจข้อมูลให้ถูกต้องก่อนส่งประเมิน</p>
+      <h2 tabindex="-1">${t('s2Title')}</h2>
+      <p class="sub">${t('s2Sub')}</p>
       <div class="review">
-        <div><span>ประเภทสูท</span><strong>${state.gender === 'male' ? 'สูทผู้ชาย' : 'สูทผู้หญิง'}</strong></div>
+        <div><span>${t('genderLabel')}</span><strong>${state.gender === 'male' ? t('genderMale') : t('genderFemale')}</strong></div>
         ${Object.entries(state.values).filter(([k, v]) => v && (state.gender === 'female' || !['chest', 'hip'].includes(k))).map(([k, v]) => `
-          <div><span>${({ height: 'ส่วนสูง', weight: 'น้ำหนัก', waist: 'รอบเอวกางเกง', chest: 'รอบอก', hip: 'รอบสะโพก' })[k]}</span><strong>${escapeText(v)} ${k === 'height' ? 'cm' : k === 'weight' ? 'kg' : 'นิ้ว'}</strong></div>
+          <div><span>${fieldTitle(k)}</span><strong>${escapeText(v)} ${unitText(FIELD_RULES[k][0])}</strong></div>
         `).join('')}
       </div>
-      <button type="button" class="text-button" data-step="0">แก้ไขข้อมูล ↗</button>
-      
+      <button type="button" class="text-button" data-step="0">${t('editInfo')}</button>
+
       <div class="mini-photos-wrap">
-        <span class="mini-photos-title">ภาพถ่าย 4 มุม:</span>
+        <span class="mini-photos-title">${t('photos4')}</span>
         <div class="mini-photos">
           ${state.photos.map((p, i) => `
             <div class="mini-photo-item">
@@ -379,21 +387,20 @@ function render() {
           `).join('')}
         </div>
       </div>
-      
-      <button type="button" class="text-button" data-step="1">แก้ไขภาพถ่าย ↗</button>
+
+      <button type="button" class="text-button" data-step="1">${t('editPhotos')}</button>
 
       <label class="consent">
         <input type="checkbox" id="consent" ${state.consent ? 'checked' : ''}>
-        <span>ข้าพเจ้ายินยอมให้ส่งข้อมูลสัดส่วนและภาพถ่ายทั้ง 4 มุมไปประมวลผลด้วยระบบ AI
-        และให้ทีมงาน SUITCUBE ตรวจสอบเพื่อแนะนำขนาดที่เหมาะสม
-        <button type="button" class="inline-link" data-help="privacy">อ่านรายละเอียด</button></span>
+        <span>${t('consent')}
+        <button type="button" class="inline-link" data-help="privacy">${t('consentMore')}</button></span>
       </label>
 
       <p class="error" id="error" role="alert">${escapeText(state.errorMsg)}</p>
-      ${PREVIEW_MODE ? `<p class="preview-note">โหมดพรีวิว — ยังไม่เชื่อมระบบ AI จริง ภาพถ่ายจะไม่ถูกส่งออกจากเครื่อง และผลที่แสดงเป็นตัวเลขตัวอย่าง</p>` : ''}
+      ${PREVIEW_MODE ? `<p class="preview-note">${t('previewNote')}</p>` : ''}
       <div class="actions">
-        <button type="button" class="secondary" data-step="1">ย้อนกลับ</button>
-        <button type="button" class="primary" id="result" ${state.consent ? '' : 'disabled'}>ส่งประเมินด้วย AI →</button>
+        <button type="button" class="secondary" data-step="1">${t('back')}</button>
+        <button type="button" class="primary" id="result" ${state.consent ? '' : 'disabled'}>${t('submit')}</button>
       </div>
     `;
   } else {
@@ -407,49 +414,52 @@ function render() {
       ? recommendSizes(m.chest, state.gender)
       : { main: r.jacket_size, alts: r.jacket_size_alternatives || [] };
     const alts = rec.alts.map(sizeNum).join(', ');
-    const lengthName = { S: 'Short', R: 'Regular', L: 'Long' }[r.jacket_length] || '';
-    const warnings = r.warnings || [];
+    const lengthName = t('lengthNames')[r.jacket_length] || '';
+    // คำเตือนจาก API เป็นภาษาไทย — ภาษาอื่นแสดงข้อความกลางข้อเดียวแทน (ทีมงานเห็นฉบับเต็มใน Lark Base)
+    const rawWarnings = r.warnings || [];
+    const warnings = rawWarnings.length && t('warningsGeneric') ? [t('warningsGeneric')] : rawWarnings;
     const confirmWaist = r.action_required === 'CONFIRM_WAIST';
-    const measures = [
-      ['ไหล่', m.shoulder], ['อก', m.chest], ['เอว', m.waist], ['สะโพก', m.hip],
-      ['ต้นแขน', m.upper_arm], ['ยาวแขน', m.arm_length], ['ยาวหน้า', m.front_length], ['ยาวหลัง', m.back_length]
-    ];
+    const mLabels = t('measures');
+    const measures = [m.shoulder, m.chest, m.waist, m.hip, m.upper_arm, m.arm_length, m.front_length, m.back_length]
+      .map((v, i) => [mLabels[i], v]);
+    const val = k => ({ v: escapeText(state.values[k]) });
     const info = [
-      [ICON.person, state.gender === 'male' ? 'ชาย' : 'หญิง'],
-      [ICON.ruler, `${escapeText(state.values.height)} ซม.`],
-      [ICON.scale, `${escapeText(state.values.weight)} กก.`],
-      [ICON.waist, `เอวกางเกง ${escapeText(state.values.waist)} นิ้ว`],
-      ...(state.gender === 'female' && state.values.chest ? [[ICON.measureTape, `รอบอก ${escapeText(state.values.chest)} นิ้ว`]] : []),
-      ...(state.gender === 'female' && state.values.hip ? [[ICON.measureTape, `รอบสะโพก ${escapeText(state.values.hip)} นิ้ว`]] : []),
+      [ICON.person, state.gender === 'male' ? t('male') : t('female')],
+      [ICON.ruler, t('infoHeight', val('height'))],
+      [ICON.scale, t('infoWeight', val('weight'))],
+      [ICON.waist, t('infoWaist', val('waist'))],
+      ...(state.gender === 'female' && state.values.chest ? [[ICON.measureTape, t('infoChest', val('chest'))]] : []),
+      ...(state.gender === 'female' && state.values.hip ? [[ICON.measureTape, t('infoHip', val('hip'))]] : []),
       ...(typeof r.bmi === 'number' ? [[ICON.bmi, `BMI ${r.bmi}`]] : [])
     ];
+    const issuedAt = new Date().toLocaleString(t('locale'), { dateStyle: 'medium', timeStyle: 'short' });
     body = `
 
       <img src="images/suitcube-ai-logo.webp" alt="SUITCUBE AI" class="print-only print-logo">
       <div class="result-title">
-        <h2 tabindex="-1">ผลประเมินขนาดของคุณ</h2>
-        <p class="sub">สรุปไซส์แนะนำและสัดส่วนเบื้องต้นของคุณ</p>
+        <h2 tabindex="-1">${t('resTitle')}</h2>
+        <p class="sub">${t('resSub')}</p>
       </div>
-      ${r.preview ? `<p class="preview-banner"><b>ผลตัวอย่าง</b> — หน้านี้เป็นโหมดพรีวิว ตัวเลขประมาณจากข้อมูลที่กรอก ไม่ได้มาจากการประเมินด้วย AI</p>` : ''}
+      ${r.preview ? `<p class="preview-banner">${t('previewBanner')}</p>` : ''}
 
       <div class="result-layout">
         <div class="result-side">
-          <section class="size-card" aria-label="ไซส์แนะนำ">
+          <section class="size-card" aria-label="${t('sizeCardLabel')}">
             <span class="eyebrow eyebrow-thread">SUITCUBE · FIT LABEL</span>
-            <span class="size-label">ไซส์แนะนำสำหรับคุณ</span>
+            <span class="size-label">${t('sizeLabel')}</span>
             <div class="size-main">
               <span class="size-num">${sizeNum(rec.main)}</span>
               <span class="size-len"><b>${escapeText(r.jacket_length || '')}</b>${lengthName ? `<small>${lengthName}</small>` : ''}</span>
-              <span class="result-badge">แนะนำ</span>
+              <span class="result-badge">${t('badge')}</span>
             </div>
-            ${alts ? `<div class="size-alt">ไซส์ทางเลือก <b>${alts}</b></div>` : ''}
+            ${alts ? `<div class="size-alt">${t('sizeAlt')} <b>${alts}</b></div>` : ''}
             ${ICON.jacket}
           </section>
 
           <section class="soft-card">
             <div class="card-head">
-              <h3>ข้อมูลของคุณ</h3>
-              <button type="button" class="edit-link" data-step="0">${ICON.edit}แก้ไขข้อมูล</button>
+              <h3>${t('yourInfo')}</h3>
+              <button type="button" class="edit-link" data-step="0">${ICON.edit}${t('editShort')}</button>
             </div>
             <ul class="info-list">
               ${info.map(([icon, text]) => `<li>${icon}<span>${text}</span></li>`).join('')}
@@ -460,26 +470,26 @@ function render() {
         <section class="soft-card measure-card ticket">
           <div class="ticket-strip">
             <span class="eyebrow">FITTING TICKET</span>
-            <span class="ticket-meta">ออกเมื่อ ${escapeText(new Date().toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }))}</span>
+            <span class="ticket-meta">${escapeText(t('issued', { date: issuedAt }))}</span>
           </div>
           <div class="card-head">
-            <h3>${ICON.measureTape}สัดส่วนประเมิน</h3>
-            <span class="unit-pill">หน่วย: นิ้ว</span>
+            <h3>${ICON.measureTape}${t('measTitle')}</h3>
+            <span class="unit-pill">${t('unitPill')}</span>
           </div>
           <div class="measure-grid">
             ${measures.map(([label, v]) => `<div class="measure-item"><span>${label}</span><strong>${fmt(v)}″</strong></div>`).join('')}
           </div>
-          ${confirmWaist ? `<p class="result-alert">รอบเอวที่กรอกดูไม่สอดคล้องกับน้ำหนักและส่วนสูง กรุณาตรวจสอบรอบเอวกางเกงอีกครั้ง หรือให้ทีมงานยืนยันก่อนสั่งตัด</p>` : ''}
+          ${confirmWaist ? `<p class="result-alert">${t('confirmWaist')}</p>` : ''}
           ${warnings.length ? `
             <ul class="result-notes">
               ${warnings.map(w => `<li>${escapeText(w)}</li>`).join('')}
             </ul>
           ` : ''}
-          <p class="result-note">${ICON.info}ไซส์แนะนำเบื้องต้น ทีมงานจะตรวจสอบอีกครั้งก่อนยืนยันการสั่งตัด</p>
+          <p class="result-note">${ICON.info}${t('resultNote')}</p>
           <div class="result-actions">
-            <button type="button" class="primary" id="print">${ICON.print}บันทึกผล / พิมพ์</button>
-            <button type="button" class="secondary" data-help="stylist">${ICON.chat}ปรึกษาเรา</button>
-            <button type="button" class="text-button" id="reset">${ICON.restart}เริ่มใหม่</button>
+            <button type="button" class="primary" id="print">${ICON.print}${t('print')}</button>
+            <button type="button" class="secondary" data-help="stylist">${ICON.chat}${t('navStylist')}</button>
+            <button type="button" class="text-button" id="reset">${ICON.restart}${t('restart')}</button>
           </div>
         </section>
       </div>
@@ -533,7 +543,7 @@ function bind() {
   });
 
   document.querySelector('#photos-next')?.addEventListener('click', () => {
-    if (state.photos.some(p => !p)) return error('กรุณาเลือกภาพให้ครบทั้ง 4 มุมก่อนดำเนินการต่อ');
+    if (state.photos.some(p => !p)) return error(t('errNeed4'));
     go(2);
   });
 
@@ -549,14 +559,12 @@ function error(t) {
   if (el) el.textContent = t;
 }
 
-const LOADING_STEPS = ['กำลังตรวจสอบภาพถ่ายทั้ง 4 มุม', 'กำลังวิเคราะห์สัดส่วนร่างกาย', 'กำลังคำนวณขนาดเสื้อสูท', 'กำลังตรวจกับกฎช่างตัด'];
-
 function loadingHTML() {
   return `<div class="loading" role="status">
     <div class="tape" aria-hidden="true"><div class="tape-ticks"></div><div class="tape-tab"></div></div>
-    <h2>กำลังประมวลผลขนาดของคุณ</h2>
-    <p class="sub loading-status">${LOADING_STEPS[0]}</p>
-    <p class="loading-hint">ใช้เวลาประมาณ 5–10 วินาที</p>
+    <h2>${t('loadingTitle')}</h2>
+    <p class="sub loading-status">${t('loadingSteps')[0]}</p>
+    <p class="loading-hint">${t('loadingHint')}</p>
   </div>`;
 }
 
@@ -566,8 +574,9 @@ function startLoadingTicker() {
   state.loadingTimer = setInterval(() => {
     const el = surface.querySelector('.loading-status');
     if (!el) return clearInterval(state.loadingTimer);
-    i = (i + 1) % LOADING_STEPS.length;
-    const swap = () => { el.textContent = LOADING_STEPS[i]; };
+    const steps = t('loadingSteps');
+    i = (i + 1) % steps.length;
+    const swap = () => { el.textContent = steps[i]; };
     if (reduceMotion()) return swap();
     el.animate([{ opacity: 1, transform: 'translateY(0)' }, { opacity: 0, transform: 'translateY(-4px)' }], { duration: 180, easing: 'ease-in', fill: 'forwards' })
       .finished.then(() => {
@@ -588,7 +597,7 @@ function apiMessage(detail) {
 
 async function submitPrediction() {
   if (state.busy || !state.consent) return;
-  if (state.photos.some(p => !p?.file)) return error('กรุณาเลือกภาพให้ครบทั้ง 4 มุม');
+  if (state.photos.some(p => !p?.file)) return error(t('errNeed4'));
 
   const isFemale = state.gender === 'female';
   const fd = new FormData();
@@ -628,10 +637,8 @@ async function submitPrediction() {
     state.busy = false;
     go(2);
     return error(e?.name === 'TimeoutError' || e?.name === 'AbortError'
-      ? 'ระบบใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง'
-      : navigator.onLine === false
-        ? 'อุปกรณ์ไม่ได้เชื่อมต่ออินเทอร์เน็ต ข้อมูลและภาพยังอยู่ครบ — เชื่อมต่อแล้วกดส่งอีกครั้งได้เลย'
-        : 'เชื่อมต่อระบบประเมินไม่ได้ ข้อมูลและภาพยังอยู่ครบ — กรุณาตรวจสอบอินเทอร์เน็ตแล้วกดส่งอีกครั้ง');
+      ? t('errTimeout')
+      : navigator.onLine === false ? t('errOffline') : t('errConnect'));
   }
   state.busy = false;
 
@@ -652,12 +659,13 @@ async function submitPrediction() {
   }
 
   go(2);
-  const msg = apiMessage(body?.detail);
-  if (res.status === 413) return error(msg || 'ไฟล์ภาพใหญ่เกินไป กรุณาเลือกภาพที่เล็กลง');
-  if (res.status === 503 || res.status === 429) return error('ขณะนี้มีผู้ใช้งานจำนวนมาก กรุณารอสักครู่แล้วลองใหม่');
-  if (res.status === 504) return error('ระบบใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง');
-  if (res.status === 400 || res.status === 415 || res.status === 422) return error(msg || 'ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง');
-  return error('ระบบประเมินยังไม่พร้อมใช้งาน กรุณาลองใหม่ภายหลัง');
+  // ข้อความจาก API เป็นภาษาไทย — ใช้เฉพาะตอนแสดงภาษาไทย ภาษาอื่นใช้ข้อความของหน้าเว็บ
+  const msg = LANG === 'th' ? apiMessage(body?.detail) : '';
+  if (res.status === 413) return error(msg || t('err413'));
+  if (res.status === 503 || res.status === 429) return error(t('errBusy'));
+  if (res.status === 504) return error(t('errTimeout'));
+  if (res.status === 400 || res.status === 415 || res.status === 422) return error(msg || t('errInvalid'));
+  return error(t('errUnavailable'));
 }
 
 // ผลตัวอย่างสำหรับโหมดพรีวิว — สัดส่วนประมาณหยาบๆ จากค่าที่กรอก ไม่ใช่โมเดล (หน้าผลติดป้ายบอกชัด)
@@ -708,7 +716,7 @@ async function fitForUpload(file, img) {
 async function loadPhoto(i, file) {
   if (!file) return;
   if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-    return error('เลือกไฟล์ JPG, PNG หรือ WebP');
+    return error(t('errType'));
   }
   const url = URL.createObjectURL(file);
   const img = new Image();
@@ -720,14 +728,14 @@ async function loadPhoto(i, file) {
     });
   } catch {
     URL.revokeObjectURL(url);
-    return error('เปิดภาพนี้ไม่ได้ กรุณาลองเลือกภาพอื่น');
+    return error(t('errOpen'));
   }
   let upload;
   try {
     upload = await fitForUpload(file, img);
   } catch {
     URL.revokeObjectURL(url);
-    return error('ภาพนี้ใหญ่เกินไป กรุณาเลือกภาพอื่น');
+    return error(t('errBig'));
   }
   if (state.photos[i]?.url) URL.revokeObjectURL(state.photos[i].url);
   state.photos[i] = { url, file: upload };
@@ -738,7 +746,7 @@ async function loadPhoto(i, file) {
   state.justAdded = i;
   render();
   state.justAdded = null;
-  announce(`เพิ่มภาพ${angles[i]}แล้ว ${state.photos.filter(Boolean).length} จาก 4 ภาพ`);
+  announce(t('liveAdded', { angle: angles[i], n: state.photos.filter(Boolean).length }));
 }
 
 function reset() {
@@ -758,56 +766,16 @@ function reset() {
   closeDialog();
 }
 
-const help = {
-  how: [
-    'วิธีใช้งาน SUITCUBE AI',
-    '<ol><li>กรอกข้อมูลสัดส่วนเบื้องต้น (ส่วนสูง, น้ำหนัก, รอบเอวกางเกง)</li><li>เตรียมภาพถ่ายเต็มตัวทั้ง 4 มุม (หน้า, หลัง, ซ้าย, ขวา) ตามคำแนะนำ</li><li>ตรวจสอบข้อมูล แล้วกดยืนยันส่งประเมิน</li><li>รับผลขนาดเสื้อสูทที่แนะนำ ทีมงาน SUITCUBE จะตรวจสอบอีกครั้งก่อนสั่งตัด</li></ol>'
-  ],
-  photo: [
-    'เตรียมภาพถ่ายอย่างไร',
-    `
-      <div class="modal-photo-strip">
-        <div class="modal-photo-item"><img src="images/photo-sample-front.jpg" alt="ด้านหน้า"><small>ด้านหน้า</small></div>
-        <div class="modal-photo-item"><img src="images/photo-sample-back.jpg" alt="ด้านหลัง"><small>ด้านหลัง</small></div>
-        <div class="modal-photo-item"><img src="images/photo-sample-left.jpg" alt="ด้านซ้าย"><small>ด้านซ้าย</small></div>
-        <div class="modal-photo-item"><img src="images/photo-sample-right.jpg" alt="ด้านขวา"><small>ด้านขวา</small></div>
-      </div>
-      <ol>
-        <li>สวมเสื้อยืดและกางเกงที่พอดีตัว ไม่สวมเสื้อคลุมหรือเสื้อผ้าหลวม</li>
-        <li>ยืนตรง มองตรง แขนแยกจากลำตัวเล็กน้อย เห็นตั้งแต่ศีรษะถึงปลายเท้า</li>
-        <li>ตั้งระดับกล้องตรง พื้นหลังเรียบ และมีแสงสว่างสม่ำเสมอ</li>
-        <li>ถ่ายให้ครบทั้ง 4 ด้าน: หน้า, หลัง, ซ้าย และขวา</li>
-      </ol>
-    `
-  ],
-  waist: [
-    'วิธีดูรอบเอวกางเกง',
-    `
-      <p>ให้ใช้รอบเอวกางเกงที่คุณใส่ในชีวิตประจำวันจริงเป็นหน่วย <strong>นิ้ว</strong> (เช่น 32 นิ้ว)</p>
-      <p><em>ข้อควรระวัง:</em> ให้ใช้ขนาดรอบเอวจริงของกางเกง ไม่ใช่รอบเอวของเสื้อสูท และไม่ใช่รหัสไซซ์ S/M/L ของแต่ละแบรนด์</p>
-    `
-  ],
-  privacy: [
-    'ข้อมูลและความเป็นส่วนตัว',
-    `<p><strong>ข้อมูลที่เก็บ:</strong> เพศ ส่วนสูง น้ำหนัก รอบเอวกางเกง (และรอบอก รอบสะโพกสำหรับสูทผู้หญิง) พร้อมภาพถ่ายเต็มตัว 4 มุม</p>
-     <p><strong>ใช้เพื่อ:</strong> ประเมินขนาดเสื้อสูทด้วยระบบ AI และให้ทีมงาน SUITCUBE ตรวจสอบความถูกต้องก่อนแนะนำหรือสั่งตัด</p>
-     <p><strong>เมื่อไหร่ถูกส่ง:</strong> ข้อมูลและภาพอยู่บนเครื่องของคุณจนกว่าจะติ๊กยินยอมและกดส่งประเมินในขั้นตอนตรวจสอบ</p>
-     <p>หากต้องการสอบถามหรือขอให้ลบข้อมูล ติดต่อทีมงานผ่าน <a href="https://www.suitcube.com/" target="_blank" rel="noopener">เว็บไซต์ SUITCUBE ↗</a></p>`
-  ],
-  stylist: [
-    'ปรึกษาสไตลิสต์ SUITCUBE',
-    '<p>หากคุณต้องการคำแนะนำเรื่องการเลือกทรงสูท สีผ้า หรือต้องการจองคิววัดตัวจริงที่สาขา สามารถติดต่อทีมสไตลิสต์ผู้เชี่ยวชาญของ SUITCUBE ได้โดยตรง</p><p><a href="https://www.suitcube.com/" target="_blank" rel="noopener">ไปยังเว็บไซต์ทางการ SUITCUBE ↗</a></p>'
-  ],
-  reset: [
-    'เริ่มใหม่ทั้งหมด?',
-    '<p>ข้อมูลสัดส่วนและภาพถ่ายทั้งหมดที่อยู่ในหน้านี้จะถูกรีเซ็ตล้างค่ากลับเป็นค่าเริ่มต้น</p><button type="button" class="secondary" id="confirm-reset">ล้างข้อมูลและเริ่มใหม่</button>'
-  ]
-};
+// แถบรูปตัวอย่างท่ายืน (ใส่หน้าคำแนะนำถ่ายภาพ ทุกภาษาใช้ร่วมกัน)
+const photoStrip = () => `
+  <div class="modal-photo-strip">
+    ${photoKeys.map((k, i) => `<div class="modal-photo-item"><img src="images/photo-sample-${k}.jpg" alt="${angles[i]}"><small>${angles[i]}</small></div>`).join('')}
+  </div>`;
 
 function showHelp(key) {
-  const h = help[key];
+  const h = t('help')[key];
   if (!h) return;
-  document.querySelector('#dialog-content').innerHTML = `<h2>${h[0]}</h2>${h[1]}`;
+  document.querySelector('#dialog-content').innerHTML = `<h2>${h[0]}</h2>${key === 'photo' ? photoStrip() : ''}${h[1]}`;
   const d = document.querySelector('#dialog');
   d.classList.remove('is-closing');
   if (!d.open) d.showModal(); // showModal ซ้ำบน dialog ที่เปิดอยู่จะ throw
@@ -862,7 +830,7 @@ document.addEventListener('click', e => {
     state.result = null;
     state.max = 1;
     render();
-    announce(`นำภาพ${angles[i]}ออกแล้ว`);
+    announce(t('liveRemoved', { angle: angles[i] }));
     document.querySelector(`#photo${i}`)?.focus(); // ปุ่มที่กดหายไปแล้ว — คืนโฟกัสไว้ที่ช่องเลือกภาพของมุมเดิม
   }
 });
@@ -937,6 +905,35 @@ if (heroImg) {
     });
   }, { passive: true });
 }
+
+// สลับภาษา: ค่าที่กรอกและภาพที่เลือกอยู่ใน state จึงไม่หาย — วาดข้อความใหม่ทั้งหน้า
+function setLang(lang) {
+  if (!LANGS.includes(lang) || lang === LANG) return;
+  LANG = lang;
+  try { localStorage.setItem(LANG_STORE, lang); } catch { /* โหมดส่วนตัว */ }
+  labels = t('steps');
+  angles = t('angles');
+  applyStaticI18n();
+  stepperKey = '';
+  picksKey = '';
+  if (state.busy) {
+    // กำลังรอผล: เปลี่ยนเฉพาะข้อความหน้าโหลด ห้าม render() ทับ
+    renderStepper(true);
+    renderPicks();
+    const status = surface.querySelector('.loading');
+    if (status) { clearInterval(state.loadingTimer); surface.innerHTML = loadingHTML(); startLoadingTicker(); }
+    return;
+  }
+  state.errorMsg = '';
+  render();
+}
+
+const langSelect = document.querySelector('#lang-select');
+if (langSelect) {
+  langSelect.value = LANG;
+  langSelect.addEventListener('change', () => setLang(langSelect.value));
+}
+applyStaticI18n();
 
 // Initial Render (ลอยขึ้นเบาๆ ตอนโหลดหน้า)
 transition(render, 1);
