@@ -2871,7 +2871,7 @@ html {
   outline: 2px solid var(--gold-primary);
   outline-offset: 2px;
 }
-.lang-switch svg { flex-shrink: 0; }
+.lang-switch svg { flex-shrink: 0; color: var(--gold-mark); } /* ทองเดียวกับไอคอนปรึกษาเรา */
 .lang-switch select {
   appearance: none;
   -webkit-appearance: none;
