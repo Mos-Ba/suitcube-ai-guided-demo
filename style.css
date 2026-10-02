@@ -3018,3 +3018,12 @@ dialog .secondary.danger:hover { background: var(--danger-bg); border-color: var
   .lang-btn { padding: 0 8px; gap: 5px; }
   .lang-switch { margin-right: 0; }
 }
+
+/* ── หน้าผล: ปุ่มหลัก = เลือกซื้อสินค้า (เต็มแถว) · บันทึกผล/ปรึกษาเรา เป็นปุ่มรอง ── */
+.result-actions .shop-btn {
+  grid-column: 1 / -1;
+  text-decoration: none;
+  min-height: 52px;
+  font-size: 16px;
+}
+.result-actions .shop-btn span { opacity: .75; }

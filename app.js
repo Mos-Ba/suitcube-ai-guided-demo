@@ -129,6 +129,7 @@ const ICON = {
   info: svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v.2"/>'),
   print: svg('<path d="M7 8V3h10v5M7 17H3V9h18v8h-4M7 14h10v7H7Z M17 11h1"/>'),
   chat: svg('<path d="M21 11a9 9 0 0 1-9 9 10 10 0 0 1-4-.8L3 21l1.7-5A9 9 0 1 1 21 11Z"/><circle cx="8" cy="11" r=".65" fill="currentColor" stroke="none"/><circle cx="12" cy="11" r=".65" fill="currentColor" stroke="none"/><circle cx="16" cy="11" r=".65" fill="currentColor" stroke="none"/>'),
+  bag: svg('<path d="M6 8h12l1 12H5L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>'),
   restart: svg('<path d="M4 8a9 9 0 1 1-1 7M4 3v5h5"/>'),
   check: svg('<path d="m5 12 5 5L20 6"/>'),
   // ภาพลายเส้นเสื้อสูท (ตกแต่ง ไม่ใช่ภาพจำลองทรงของลูกค้า)
@@ -165,6 +166,9 @@ const PICKS = {
   }
 };
 
+// หน้ารวมสินค้าบน suitcube.com ตามประเภทสูทและภาษา (ปุ่ม "เลือกซื้อสินค้า" และลิงก์ "ดูทั้งหมด" ใช้ร่วมกัน)
+const shopUrl = () => 'https://www.suitcube.com/' + (PICKS[state.gender] || PICKS.male).all[LANG];
+
 let picksKey = '';
 function renderPicks() {
   const grid = document.querySelector('#picks-grid');
@@ -178,7 +182,7 @@ function renderPicks() {
 
   const set = PICKS[state.gender] || PICKS.male;
   const site = 'https://www.suitcube.com/';
-  document.querySelector('#picks-all').href = site + set.all[LANG];
+  document.querySelector('#picks-all').href = shopUrl();
   document.querySelector('#picks-sub').textContent = size ? t('picksSubSize', { size }) : t('picksSub');
   grid.innerHTML = set.items.map(([name, code, img, slug]) => `
     <li>
@@ -489,7 +493,8 @@ function render() {
           ` : ''}
           <p class="result-note">${ICON.info}${t('resultNote')}</p>
           <div class="result-actions">
-            <button type="button" class="primary" id="print">${ICON.print}${t('print')}</button>
+            <a class="primary shop-btn" href="${shopUrl()}" target="_blank" rel="noopener">${ICON.bag}${t('shop')} <span aria-hidden="true">↗</span></a>
+            <button type="button" class="secondary" id="print">${ICON.print}${t('print')}</button>
             <button type="button" class="secondary" data-help="stylist">${ICON.chat}${t('navStylist')}</button>
             <button type="button" class="text-button" id="reset">${ICON.restart}${t('restart')}</button>
           </div>

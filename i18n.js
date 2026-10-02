@@ -139,6 +139,7 @@ const I18N = {
     warningsGeneric: '',
     resultNote: 'ไซส์แนะนำเบื้องต้น ทีมงานจะตรวจสอบอีกครั้งก่อนยืนยันการสั่งตัด',
     print: 'บันทึกผล / พิมพ์',
+    shop: 'เลือกซื้อสินค้า',
     restart: 'เริ่มใหม่',
 
     help: {
@@ -293,6 +294,7 @@ const I18N = {
     warningsGeneric: 'The AI flagged a few points for our fitting team to double-check before tailoring.',
     resultNote: 'This is a preliminary size. Our team will check it again before confirming your order.',
     print: 'Save / print',
+    shop: 'Shop suits',
     restart: 'Start over',
 
     help: {
@@ -447,6 +449,7 @@ const I18N = {
     warningsGeneric: 'AI 标记了一些事项，量体团队会在定制前进行复核。',
     resultNote: '此为初步推荐尺码，团队会在确认定制前再次核对。',
     print: '保存 / 打印',
+    shop: '选购西装',
     restart: '重新开始',
 
     help: {
